@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "home-security",
+    "name": "Home Security",
     "slug": "home-security",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -37,6 +37,12 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.270094029822-51rsu9sts6poho93jupo2q9cjbatlo8v"
         }
       ]
     ],
