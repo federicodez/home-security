@@ -46,7 +46,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.270094029822-51rsu9sts6poho93jupo2q9cjbatlo8v"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
