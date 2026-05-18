@@ -15,9 +15,9 @@ export default function FloorPlan({ serviceId }: FloorPlanProps) {
   const { data: assignments } = useAssignmentList();
   const { mutate } = useUpdateAssignment();
 
-  const handleAssign = (userId: string) => {
+  const handleAssign = (team_member_id: string) => {
     try {
-      mutate({ serviceId, station: position, userId });
+      mutate({ serviceId, station: position, team_member_id });
     } catch {
       throw new Error("update failed");
     } finally {
@@ -26,7 +26,7 @@ export default function FloorPlan({ serviceId }: FloorPlanProps) {
   };
 
   const handleClear = () =>
-    mutate({ serviceId, station: position, userId: null });
+    mutate({ serviceId, station: position, team_member_id: null });
 
   return (
     <View style={{ flex: 1, backgroundColor: "black" }}>
@@ -167,14 +167,14 @@ export default function FloorPlan({ serviceId }: FloorPlanProps) {
           {/* Positions (Pink dots) */}
           {assignments?.map(
             ({
-              user,
+              team_member,
               position: { station, x, y },
               service: { id: service_id },
               id,
             }) => (
               <G key={id}>
                 <Position
-                  user={serviceId === service_id ? user : null}
+                  user={serviceId === service_id ? team_member : null}
                   station={station}
                   x={x}
                   y={y}

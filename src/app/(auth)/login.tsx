@@ -4,7 +4,7 @@ import Button from "@/components/Button";
 import Colors from "../../constants/Colors";
 import { Link, Stack } from "expo-router";
 import { supabase } from "@/utils/supabase";
-import * as WebBrowser from "expo-web-browser";
+//import * as WebBrowser from "expo-web-browser";
 import {
   GoogleSigninButton,
   GoogleSignin,
@@ -21,7 +21,7 @@ GoogleSignin.configure({
   scopes: ["https://www.googleapis.com/auth/drive.readonly"], // what API you want to access on behalf of the user, default is email and profile
 });
 
-WebBrowser.maybeCompleteAuthSession(); // required for web only
+//WebBrowser.maybeCompleteAuthSession(); // required for web only
 
 const Login = () => {
   const [email, setEmail] = useState("");

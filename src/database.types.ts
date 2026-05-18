@@ -20,21 +20,21 @@ export type Database = {
           id: string
           service_id: string
           station: string
-          user_id: string | null
+          team_member_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           service_id: string
           station: string
-          user_id?: string | null
+          team_member_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           service_id?: string
           station?: string
-          user_id?: string | null
+          team_member_id?: string | null
         }
         Relationships: [
           {
@@ -52,10 +52,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "assignments_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "assignments_team_member_id_fkey"
+            columns: ["team_member_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -87,24 +87,27 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          created_at: string | null
           email: string | null
           full_name: string | null
           id: string
-          updated_at: string | null
+          role: string | null
         }
         Insert: {
           avatar_url?: string | null
+          created_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
-          updated_at?: string | null
+          role?: string | null
         }
         Update: {
           avatar_url?: string | null
+          created_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
-          updated_at?: string | null
+          role?: string | null
         }
         Relationships: []
       }
@@ -129,7 +132,7 @@ export type Database = {
         }
         Relationships: []
       }
-      users: {
+      team_members: {
         Row: {
           created_at: string | null
           id: string
@@ -155,12 +158,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      assign_user_to_station:
-        | { Args: { p_station: string; p_user: string }; Returns: undefined }
-        | {
-            Args: { p_service: string; p_station: string; p_user: string }
-            Returns: undefined
-          }
+      assign_user_to_station: {
+        Args: { p_service: string; p_station: string; p_team_member: string }
+        Returns: undefined
+      }
+      get_teams_for_user: {
+        Args: { p_team_member: string }
+        Returns: {
+          service_name: string
+          station: string
+          team_member_name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

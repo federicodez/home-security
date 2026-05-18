@@ -10,27 +10,31 @@ export const useAssignmentList = () => {
         .from("assignments")
         .select(
           `
-          id,
-          service:service_id (
-            id,
-            name,
-            starts_at
-          ),
-          user:user_id (
-            id,
-            name
-          ),
-          position:station (
-            station,
-            x,
-            y
-          )
-        `,
+              id,
+              station,
+              service_id,
+              team_member_id,
+
+              service:service_id (
+                id,
+                name,
+                starts_at
+              ),
+
+              team_member:team_member_id (
+                id,
+                name,
+                role
+              ),
+
+              position:station (
+                station,
+                x,
+                y
+              )
+            `,
         )
-        .order("starts_at", {
-          ascending: true,
-          foreignTable: "service",
-        });
+        .order("station");
 
       if (error) {
         throw new Error(error.message);
@@ -47,14 +51,14 @@ export const useUpdateAssignment = () => {
     mutationFn: async ({
       serviceId,
       station,
-      userId,
+      team_member_id,
     }: {
       serviceId: string;
       station: string;
-      userId: string | null;
+      team_member_id: string | null;
     }) => {
       const { error } = await supabase.rpc("assign_user_to_station", {
-        p_user: userId,
+        p_team_member: team_member_id,
         p_service: serviceId,
         p_station: station,
       });

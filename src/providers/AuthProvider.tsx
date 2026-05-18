@@ -1,6 +1,5 @@
 import { supabase } from "@/utils/supabase";
 import { Session } from "@supabase/supabase-js";
-import type { Profile } from "@/types";
 import {
   PropsWithChildren,
   createContext,
@@ -11,19 +10,16 @@ import {
 
 type AuthData = {
   session: Session | null;
-  profile: Profile | null;
   loading: boolean;
 };
 
 const AuthContext = createContext<AuthData>({
   session: null,
   loading: true,
-  profile: null,
 });
 
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,17 +34,12 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
         if (session) {
           //fetch profile
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", session.user.id)
-            .single();
-
-          if (error) {
-            console.error("Error fetching profile: ", error);
-          } else {
-            setProfile(data || null);
-          }
+          await supabase.from("profiles").upsert({
+            id: session.user.id,
+            email: session.user.user_metadata.email,
+            full_name: session.user.user_metadata.full_name,
+            avatar_url: session.user.user_metadata.avatar_url,
+          });
         }
       } catch (error) {
         console.error("Error fetching session: ", error);
@@ -72,7 +63,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading }}>
+    <AuthContext.Provider value={{ session, loading }}>
       {children}
     </AuthContext.Provider>
   );

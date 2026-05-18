@@ -47,9 +47,6 @@ const Register = () => {
         disabled={loading}
         text={loading ? "Creating account..." : "Create account"}
       />
-      <Link href="/login" style={styles.textButton}>
-        Sign in
-      </Link>
     </View>
   );
 };

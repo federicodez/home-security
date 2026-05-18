@@ -7,7 +7,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
 } from "react-native";
-import { getUsers } from "@/api/users";
+import { getTeamMembers } from "@/api/team_members";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 
 interface UsersModalProps {
@@ -21,7 +21,7 @@ const UsersModal = ({
   onModalVisible,
   onHandleAssign,
 }: UsersModalProps) => {
-  const { data } = getUsers();
+  const { data } = getTeamMembers();
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.centeredView}>
