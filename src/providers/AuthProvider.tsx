@@ -1,72 +1,81 @@
+import { createContext, useContext, useEffect, useState } from "react";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase";
-import { Session } from "@supabase/supabase-js";
-import {
-  PropsWithChildren,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
-type AuthData = {
+type AuthContextType = {
   session: Session | null;
+  user: User | null;
   loading: boolean;
+  signOut: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthData>({
-  session: null,
-  loading: true,
-});
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export default function AuthProvider({ children }: PropsWithChildren) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
-    const fetchSession = async () => {
-      setLoading(true);
+    const initialize = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setSession(session);
-
-        if (session) {
-          //fetch profile
-          await supabase.from("profiles").upsert({
-            id: session.user.id,
-            email: session.user.user_metadata.email,
-            full_name: session.user.user_metadata.full_name,
-            avatar_url: session.user.user_metadata.avatar_url,
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching session: ", error);
-      } finally {
-        setLoading(false);
-      }
+      setSession(session);
+      setLoading(false);
     };
 
-    fetchSession();
+    initialize();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        if (session) {
-          fetchSession();
-        }
-      },
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
 
-    return () => authListener?.subscription.unsubscribe();
-  }, []);
+      if (!session) {
+        queryClient.clear();
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: ["profile"],
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) throw error;
+    queryClient.clear();
+  };
 
   return (
-    <AuthContext.Provider value={{ session, loading }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user: session?.user ?? null,
+        loading,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
+  return context;
+};

@@ -1,8 +1,9 @@
-import { Circle, Text as SvgText } from "react-native-svg";
-import type { UserRow } from "@/types";
+import { Circle, Text, G } from "react-native-svg";
+import type { ProfileRow } from "@/types";
+import { getInitials } from "@/utils/helpers";
 
 interface PositionProps {
-  user: UserRow | null;
+  user: ProfileRow | null;
   station: string;
   x: number;
   y: number;
@@ -23,127 +24,223 @@ const Position = ({
   onClear,
 }: PositionProps) => {
   if (user) {
+    const name = getInitials(user.full_name?.toUpperCase());
     switch (station) {
       case "G":
         return (
-          <>
-            <SvgText
-              x={x}
-              y={y}
-              fill="lime"
-              fontSize="12"
-              fontWeight="bold"
-              transform={`rotate(20, ${x + 40}, ${y - 60})`}
-            >
-              {user.name.toUpperCase()}
-            </SvgText>
-
+          <G
+            onPress={() => {
+              onModalVisible(!modalVisible);
+              onPosition(station);
+            }}
+            onLongPress={onClear}
+          >
+            {/* invisible hit target */}
+            <Circle cx={x} cy={y} r={32} fill="transparent" />
+            {/* outer station circle */}
             <Circle
               cx={x}
               cy={y}
-              r="6"
-              fill="lime"
-              onPress={() => {
-                onModalVisible(!modalVisible);
-                onPosition(station);
-              }}
-              onLongPress={onClear}
+              r={18}
+              fill="#22C55E"
+              stroke="white"
+              strokeWidth={2}
             />
-          </>
+            {/* station letter */}
+            <Text
+              x={x}
+              y={y}
+              textAnchor="middle"
+              alignmentBaseline="middle"
+              fontSize="12"
+              fontWeight="bold"
+              fill="black"
+            >
+              {station}
+            </Text>
+            <Text
+              x={x}
+              y={y - 30}
+              textAnchor="middle"
+              fill="white"
+              fontSize="18"
+              fontWeight="bold"
+            >
+              {name}
+            </Text>
+          </G>
         );
       case "H":
         return (
-          <>
-            <SvgText
+          <G
+            onPress={() => {
+              onModalVisible(!modalVisible);
+              onPosition(station);
+            }}
+            onLongPress={onClear}
+          >
+            {/* station letter */}
+            <Text
               x={x}
               y={y}
-              fill="lime"
+              textAnchor="middle"
+              alignmentBaseline="middle"
               fontSize="12"
               fontWeight="bold"
-              transform={`rotate(20, ${x + 40}, ${y - 60})`}
+              fill="black"
             >
-              {user.name.toUpperCase()}
-            </SvgText>
-
-            <Circle
-              cx={x}
-              cy={y}
-              r="6"
-              fill="lime"
-              onPress={() => {
-                onModalVisible(!modalVisible);
-                onPosition(station);
-              }}
-              onLongPress={onClear}
-            />
-          </>
+              {/* invisible hit target */}
+              <Circle cx={x} cy={y} r={40} fill="transparent" />
+              {/* outer station circle */}
+              <Circle
+                cx={x}
+                cy={y}
+                r={18}
+                fill="#22C55E"
+                stroke="white"
+                strokeWidth={2}
+              />
+              {station}
+            </Text>
+            <Text
+              x={x}
+              y={y - 30}
+              textAnchor="middle"
+              fill="white"
+              fontSize="18"
+              fontWeight="bold"
+            >
+              <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
+              {name}
+            </Text>
+          </G>
         );
       case "E":
         return (
-          <>
-            <SvgText
+          <G
+            onPress={() => {
+              onModalVisible(!modalVisible);
+              onPosition(station);
+            }}
+            onLongPress={onClear}
+          >
+            {/* station letter */}
+            <Text
               x={x}
               y={y}
-              fill="lime"
+              textAnchor="middle"
+              alignmentBaseline="middle"
               fontSize="12"
               fontWeight="bold"
-              transform={`rotate(-20, ${x - 20}, ${y + 10})`}
+              fill="black"
             >
-              {user.name.toUpperCase()}
-            </SvgText>
-
-            <Circle
-              cx={x}
-              cy={y}
-              r="6"
-              fill="lime"
-              onPress={() => {
-                onModalVisible(!modalVisible);
-                onPosition(station);
-              }}
-              onLongPress={onClear}
-            />
-          </>
+              {/* invisible hit target */}
+              <Circle cx={x} cy={y} r={32} fill="transparent" />
+              {/* outer station circle */}
+              <Circle
+                cx={x}
+                cy={y}
+                r={18}
+                fill="#22C55E"
+                stroke="white"
+                strokeWidth={2}
+              />
+              {station}
+            </Text>
+            <Text
+              x={x}
+              y={y - 30}
+              textAnchor="middle"
+              fill="white"
+              fontSize="18"
+              fontWeight="bold"
+            >
+              <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
+              {name}
+            </Text>
+          </G>
         );
       default:
         return (
-          <>
-            <SvgText
-              x={x - 10}
-              y={y - 10}
-              fill="lime"
+          <G
+            onPress={() => {
+              onModalVisible(!modalVisible);
+              onPosition(station);
+            }}
+            onLongPress={onClear}
+          >
+            {/* station letter */}
+            <Text
+              x={x}
+              y={y}
+              textAnchor="middle"
+              alignmentBaseline="middle"
               fontSize="12"
               fontWeight="bold"
+              fill="black"
             >
-              {user.name.toUpperCase()}
-            </SvgText>
-            <Circle
-              cx={x}
-              cy={y}
-              r="6"
-              fill="lime"
-              onPress={() => {
-                onModalVisible(!modalVisible);
-                onPosition(station);
-              }}
-              onLongPress={onClear}
-            />
-          </>
+              {/* invisible hit target */}
+              <Circle cx={x} cy={y} r={32} fill="transparent" />
+              {/* outer station circle */}
+              <Circle
+                cx={x}
+                cy={y}
+                r={18}
+                fill="#22C55E"
+                stroke="white"
+                strokeWidth={2}
+              />
+              {station}
+            </Text>
+            <Text
+              x={x}
+              y={y - 30}
+              textAnchor="middle"
+              fill="white"
+              fontSize="18"
+              fontWeight="bold"
+            >
+              <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
+              {name}
+            </Text>
+          </G>
         );
     }
   }
 
   return (
-    <Circle
-      cx={x}
-      cy={y}
-      r="6"
-      fill="lime"
+    <G
       onPress={() => {
         onModalVisible(!modalVisible);
         onPosition(station);
       }}
-    />
+      onLongPress={onClear}
+    >
+      {/* invisible hit target */}
+      <Circle cx={x} cy={y} r={32} fill="transparent" />
+      {/* outer station circle */}
+      <Circle
+        cx={x}
+        cy={y}
+        r={18}
+        fill="#374151"
+        stroke="white"
+        strokeWidth={2}
+      />
+
+      {/* station letter */}
+      <Text
+        x={x}
+        y={y}
+        textAnchor="middle"
+        alignmentBaseline="middle"
+        fontSize="12"
+        fontWeight="bold"
+        fill="white"
+      >
+        {station}
+      </Text>
+    </G>
   );
 };
 

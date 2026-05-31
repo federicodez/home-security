@@ -1,6 +1,6 @@
 import { supabase } from "@/utils/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { AssignmentWithRelations } from "@/types";
+import { AssignmentWithRelations, ProfileRow } from "@/types";
 
 export const useAssignmentList = () => {
   return useQuery({
@@ -10,29 +10,29 @@ export const useAssignmentList = () => {
         .from("assignments")
         .select(
           `
-              id,
-              station,
-              service_id,
-              team_member_id,
-
-              service:service_id (
-                id,
-                name,
-                starts_at
-              ),
-
-              team_member:team_member_id (
-                id,
-                name,
-                role
-              ),
-
-              position:station (
-                station,
-                x,
-                y
-              )
-            `,
+          id,
+          station,
+          service_id,
+          user_id,
+          service:service_id (
+            id,
+            name,
+            starts_at
+          ),
+          profile:user_id (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            role,
+            volunteering
+          ),
+          position:station (
+            station,
+            x,
+            y
+          )
+        `,
         )
         .order("station");
 
@@ -51,14 +51,14 @@ export const useUpdateAssignment = () => {
     mutationFn: async ({
       serviceId,
       station,
-      team_member_id,
+      profileId,
     }: {
       serviceId: string;
       station: string;
-      team_member_id: string | null;
+      profileId: string | null;
     }) => {
       const { error } = await supabase.rpc("assign_user_to_station", {
-        p_team_member: team_member_id,
+        p_user: profileId,
         p_service: serviceId,
         p_station: station,
       });

@@ -10,6 +10,8 @@ export const useGetServices = () => {
         .select("*")
         .order("starts_at", { ascending: true });
 
+      if (error) throw error;
+
       return data;
     },
   });

@@ -1,193 +1,90 @@
-import { useState } from "react";
-import { View, ImageBackground } from "react-native";
-import Svg, { Rect, G } from "react-native-svg";
-import UsersModal from "./UsersModal";
-import { useAssignmentList, useUpdateAssignment } from "@/api/assignments";
-import Position from "./Position";
+import { useState, useRef } from "react";
+import { View } from "react-native";
+import PagerView from "react-native-pager-view";
+import { useUpdateAssignment, useAssignmentList } from "@/api/assignments";
+import Main from "./Main";
+import Outside from "./Outside";
+import HomeKids from "./HomeKids";
+import PaginationDots from "./PaginationDots";
 
 interface FloorPlanProps {
   serviceId: string;
 }
 
 export default function FloorPlan({ serviceId }: FloorPlanProps) {
+  const pagerRef = useRef<PagerView>(null);
+  const [page, setPage] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [position, setPosition] = useState("");
-  const { data: assignments } = useAssignmentList();
-  const { mutate } = useUpdateAssignment();
 
-  const handleAssign = (team_member_id: string) => {
+  const { data: assignments } = useAssignmentList();
+  const { mutate: updatePosition } = useUpdateAssignment();
+
+  const handleAssign = (profileId: string) => {
     try {
-      mutate({ serviceId, station: position, team_member_id });
+      updatePosition({ serviceId, station: position, profileId });
     } catch {
-      throw new Error("update failed");
+      throw new Error("position update failed");
     } finally {
       setModalVisible(false);
     }
   };
 
   const handleClear = () =>
-    mutate({ serviceId, station: position, team_member_id: null });
+    updatePosition({ serviceId, station: position, profileId: null });
 
   return (
-    <View style={{ flex: 1, backgroundColor: "black" }}>
-      <ImageBackground
-        source={require("assets/images/home_church.png")}
-        resizeMode="repeat"
+    <View style={{ flex: 1 }}>
+      <PagerView
+        ref={pagerRef}
         style={{ flex: 1 }}
+        initialPage={page}
+        onPageSelected={(e) => setPage(e.nativeEvent.position)}
       >
-        <Svg height="100%" width="100%" viewBox="0 0 400 700">
-          {/* Stage */}
-          <Rect
-            x="100"
-            y="40"
-            width="200"
-            height="80"
-            stroke="yellow"
-            strokeWidth="2"
-            fill="none"
-          />
-
-          {/* Stage Extension */}
-          <Rect
-            x="180"
-            y="120"
-            width="40"
-            height="30"
-            stroke="yellow"
-            strokeWidth="2"
-            fill="none"
-          />
-
-          {/* Chair Rows (center) */}
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Rect
-              key={`row-left-${i}`}
-              x="120"
-              y={180 + i * 30}
-              width="80"
-              height="10"
-              stroke="white"
-              fill="none"
-            />
-          ))}
-
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Rect
-              key={`row-right-${i}`}
-              x="210"
-              y={180 + i * 30}
-              width="80"
-              height="10"
-              stroke="white"
-              fill="none"
-            />
-          ))}
-
-          {/* Left side (angled inward) */}
-          {Array.from({ length: 6 }).map((_, i) => {
-            const x = 30;
-            const y = 170 + i * 40;
-            const width = 60;
-            const height = 8;
-
-            const cx = x + width / 2;
-            const cy = y + height / 2;
-
-            return (
-              <Rect
-                key={`left-side-${i}`}
-                x={x}
-                y={y}
-                width={width}
-                height={height}
-                stroke="white"
-                fill="none"
-                transform={`rotate(20, ${cx}, ${cy})`}
-              />
-            );
-          })}
-
-          {/* Right side (angled inward) */}
-          {Array.from({ length: 6 }).map((_, i) => {
-            const x = 310;
-            const y = 170 + i * 40;
-            const width = 60;
-            const height = 8;
-
-            const cx = x + width / 2;
-            const cy = y + height / 2;
-
-            return (
-              <Rect
-                key={`right-side-${i}`}
-                x={x}
-                y={y}
-                width={width}
-                height={height}
-                stroke="white"
-                fill="none"
-                transform={`rotate(-20, ${cx}, ${cy})`}
-              />
-            );
-          })}
-
-          {/* Bottom Tables */}
-          <Rect
-            x="80"
-            y="600"
-            width="100"
-            height="10"
-            stroke="white"
-            fill="none"
-          />
-          <Rect
-            x="200"
-            y="600"
-            width="100"
-            height="10"
-            stroke="white"
-            fill="none"
-          />
-          <Rect
-            x="320"
-            y="600"
-            width="60"
-            height="10"
-            stroke="white"
-            fill="none"
-          />
-
-          {/* User selection modal */}
-          <UsersModal
+        <View key="main" style={{ flex: 1 }}>
+          <Main
+            serviceId={serviceId}
             modalVisible={modalVisible}
             onModalVisible={setModalVisible}
-            onHandleAssign={handleAssign}
+            onAssign={handleAssign}
+            onClear={handleClear}
+            onPosition={setPosition}
+            assignments={assignments}
           />
+        </View>
 
-          {/* Positions (Pink dots) */}
-          {assignments?.map(
-            ({
-              team_member,
-              position: { station, x, y },
-              service: { id: service_id },
-              id,
-            }) => (
-              <G key={id}>
-                <Position
-                  user={serviceId === service_id ? team_member : null}
-                  station={station}
-                  x={x}
-                  y={y}
-                  modalVisible={modalVisible}
-                  onClear={handleClear}
-                  onPosition={setPosition}
-                  onModalVisible={setModalVisible}
-                />
-              </G>
-            ),
-          )}
-        </Svg>
-      </ImageBackground>
+        <View key="outside" style={{ flex: 1 }}>
+          <Outside
+            serviceId={serviceId}
+            modalVisible={modalVisible}
+            onModalVisible={setModalVisible}
+            onAssign={handleAssign}
+            onClear={handleClear}
+            onPosition={setPosition}
+            assignments={assignments}
+          />
+        </View>
+
+        <View key="kids" style={{ flex: 1 }}>
+          <HomeKids
+            serviceId={serviceId}
+            modalVisible={modalVisible}
+            onModalVisible={setModalVisible}
+            onAssign={handleAssign}
+            onClear={handleClear}
+            onPosition={setPosition}
+            assignments={assignments}
+          />
+        </View>
+      </PagerView>
+      <PaginationDots
+        current={page}
+        total={3}
+        onDotPress={(index) => {
+          setPage(index);
+          pagerRef.current?.setPage(index);
+        }}
+      />
     </View>
   );
 }

@@ -1,27 +1,29 @@
+import { StatusBar } from "expo-status-bar";
 import {
+  Alert,
+  Platform,
   Modal,
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
   TouchableWithoutFeedback,
-  ScrollView,
 } from "react-native";
-import { useVolunteers } from "@/api/profiles";
+import Button from "@/components/Button";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { useAuth } from "@/providers/AuthProvider";
 
-interface UsersModalProps {
+interface VolunteerModalProps {
   modalVisible: boolean;
   onModalVisible: (value: boolean) => void;
-  onAssign: (user: string) => void;
+  onHandleChange: (status: boolean) => void;
 }
 
-const UsersModal = ({
+export default function VolunteerModal({
   modalVisible,
   onModalVisible,
-  onAssign,
-}: UsersModalProps) => {
-  const { data } = useVolunteers();
+  onHandleChange,
+}: VolunteerModalProps) {
+  const { signOut } = useAuth();
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.centeredView}>
@@ -37,28 +39,31 @@ const UsersModal = ({
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback onPress={() => {}}>
                 <View style={styles.modalContainer}>
-                  <ScrollView style={styles.scrollView}>
-                    {data?.map(({ id, full_name }, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.option}
-                        onPress={() => onAssign(id)}
-                      >
-                        <Text style={styles.optionText}>
-                          {full_name?.toUpperCase()}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                  <Text style={styles.textStyle}>Volunteering?</Text>
+                  <Button text="Yes 👍" onPress={() => onHandleChange(true)} />
+                  <Button
+                    text="No 👎"
+                    onPress={async () => {
+                      try {
+                        onHandleChange(false);
+                        await signOut();
+                        Alert.alert("Signed out");
+                      } catch {
+                        Alert.alert("Logout failed");
+                      }
+                    }}
+                  />
                 </View>
               </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
+
+          <StatusBar style={Platform.OS === "ios" ? "light" : "auto"} />
         </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
   );
-};
+}
 
 const styles = StyleSheet.create({
   modalOverlay: {
@@ -120,5 +125,3 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
   },
 });
-
-export default UsersModal;

@@ -12,8 +12,8 @@ GoogleSignin.configure({
     "270094029822-51rsu9sts6poho93jupo2q9cjbatlo8v.apps.googleusercontent.com",
 });
 
-export const getInitials = (name: string) =>
-  `${name.at(0)}${name.split(" ").at(1)?.at(0)}`;
+export const getInitials = (name?: string) =>
+  `${name?.at(0)}${name?.split(" ").at(1)?.at(0)}`;
 
 export const signInWithGoogle = async () => {
   try {

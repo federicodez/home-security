@@ -5,16 +5,14 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import AuthProvider from "@/providers/AuthProvider";
+import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import QueryProvider from "@/providers/QueryProvider";
-import { TouchableOpacity } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Appearance, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -50,48 +48,33 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryProvider>
+          <AuthProvider>
+            <RootLayoutNav />
+          </AuthProvider>
+        </QueryProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const router = useRouter();
+  const { user } = useAuth();
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <AuthProvider>
-            <QueryProvider>
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="modal"
-                  options={{ presentation: "modal" }}
-                />
-                {/* <Stack.Screen */}
-                {/*   name="search" */}
-                {/*   options={{ */}
-                {/*     headerShown: false, */}
-                {/*     headerLeft: () => ( */}
-                {/*       <TouchableOpacity onPress={() => router.back()}> */}
-                {/*         <Ionicons name="close-outline" size={28} /> */}
-                {/*       </TouchableOpacity> */}
-                {/*     ), */}
-                {/*   }} */}
-                {/* /> */}
-                {/* <Stack.Screen */}
-                {/*   name="create" */}
-                {/*   options={{ headerShown: false }} */}
-                {/* /> */}
-              </Stack>
-            </QueryProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={!user}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        <Stack.Protected guard={!!user}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+      </Stack>
+    </ThemeProvider>
   );
 }

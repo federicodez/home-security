@@ -20,21 +20,21 @@ export type Database = {
           id: string
           service_id: string
           station: string
-          team_member_id: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           service_id: string
           station: string
-          team_member_id?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           service_id?: string
           station?: string
-          team_member_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -52,10 +52,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "assignments_team_member_id_fkey"
-            columns: ["team_member_id"]
+            foreignKeyName: "assignments_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "team_members"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -92,6 +92,7 @@ export type Database = {
           full_name: string | null
           id: string
           role: string | null
+          volunteering: boolean | null
         }
         Insert: {
           avatar_url?: string | null
@@ -100,6 +101,7 @@ export type Database = {
           full_name?: string | null
           id: string
           role?: string | null
+          volunteering?: boolean | null
         }
         Update: {
           avatar_url?: string | null
@@ -108,6 +110,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+          volunteering?: boolean | null
         }
         Relationships: []
       }
@@ -132,27 +135,6 @@ export type Database = {
         }
         Relationships: []
       }
-      team_members: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          role: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-          role?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          role?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -161,14 +143,6 @@ export type Database = {
       assign_user_to_station: {
         Args: { p_service: string; p_station: string; p_team_member: string }
         Returns: undefined
-      }
-      get_teams_for_user: {
-        Args: { p_team_member: string }
-        Returns: {
-          service_name: string
-          station: string
-          team_member_name: string
-        }[]
       }
     }
     Enums: {
