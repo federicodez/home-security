@@ -1,6 +1,6 @@
 import { supabase } from "@/utils/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { AssignmentWithRelations, ProfileRow } from "@/types";
+import { AssignmentWithRelations } from "@/types";
 
 export const useAssignmentList = () => {
   return useQuery({

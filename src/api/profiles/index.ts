@@ -3,12 +3,16 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
 import type { VolunteerWithAssignments } from "@/types";
 
-export type VolunteerAssignment = {
-  user_id: string;
-  full_name: string | null;
+export type VolunteerService = {
   service_id: string;
   service_name: string;
   station: string | null;
+};
+
+export type VolunteerAssignments = {
+  user_id: string;
+  full_name: string | null;
+  services: VolunteerService[];
 };
 
 export const useProfile = () => {
@@ -70,7 +74,7 @@ export async function fetchVolunteerAssignments() {
     throw error;
   }
 
-  return (data ?? []) as VolunteerAssignment[];
+  return (data ?? []) as VolunteerAssignments[];
 }
 
 export function useVolunteerAssignments() {

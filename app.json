@@ -50,7 +50,9 @@
           "iosUrlScheme": "com.googleusercontent.apps.270094029822-51rsu9sts6poho93jupo2q9cjbatlo8v"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -61,6 +63,7 @@
       "eas": {
         "projectId": "813a5cb3-5a45-40d4-800e-b6b335f3bbdb"
       }
-    }
+    },
+    "owner": "federicodes"
   }
 }
