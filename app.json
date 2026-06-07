@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "home-security",
+    "name": "Home Church Security",
     "slug": "home-security",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/home_church.png",
     "scheme": "homesecurity",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -26,28 +26,18 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.federicodes.homesecurity"
     },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/home_church.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#000000",
           "dark": {
             "backgroundColor": "#000000"
           }
-        }
-      ],
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.270094029822-51rsu9sts6poho93jupo2q9cjbatlo8v"
         }
       ],
       "expo-secure-store",
