@@ -13,15 +13,16 @@ const floorPlans = [
 interface FloorPlansPagerProps {
   service: {
     id: string;
+    name: string;
   };
 }
 
 export default function FloorPlansPager({
-  service: { id },
+  service: { id, name },
 }: FloorPlansPagerProps) {
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.centeredView}>
+      <SafeAreaView style={styles.centeredView} edges={["top"]}>
         <FlatList
           data={floorPlans}
           horizontal
@@ -30,7 +31,7 @@ export default function FloorPlansPager({
           keyExtractor={(item) => item.id}
           renderItem={() => (
             <View style={{ width, flex: 1, backgroundColor: "black" }}>
-              <FloorPlan serviceId={id} />
+              <FloorPlan serviceId={id} serviceTime={name} />
             </View>
           )}
         />

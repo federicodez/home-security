@@ -1,5 +1,8 @@
 import {
-  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
   View,
   Text,
   TextInput,
@@ -8,6 +11,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import Button from "@/components/Button";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/utils/supabase";
 
 const Login = () => {
@@ -84,91 +88,150 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <ImageBackground
-        source={require("assets/images/home_church.png")}
-        resizeMode="repeat"
-        style={styles.container}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="jon@gmail.com"
-            style={styles.input}
-            autoCapitalize="none"
-          />
-
-          <Text style={styles.label}>First Name</Text>
-          <TextInput
-            value={name.first}
-            onChangeText={(v) => setName((prev) => ({ ...prev, first: v }))}
-            placeholder="jon"
-            style={styles.input}
-            autoCapitalize="none"
-          />
-
-          <Text style={styles.label}>Last Name</Text>
-          <TextInput
-            value={name.last}
-            onChangeText={(v) => setName((prev) => ({ ...prev, last: v }))}
-            placeholder="Snow"
-            style={styles.input}
-            autoCapitalize="none"
-          />
-
-          {codeSent ? (
-            <>
-              <Text style={styles.label}>One time code</Text>
-              <TextInput
-                value={token}
-                onChangeText={setToken}
-                placeholder="*****"
-                style={styles.input}
-                secureTextEntry
-              />
-              <Button text="Submit" onPress={verifyOtp} />
-            </>
-          ) : (
-            <Button
-              text={cooldown > 0 ? `Resend in ${cooldown}s` : "Send Code"}
-              onPress={sendOtp}
-              disabled={
-                cooldown > 0 ||
-                !name.first.length ||
-                !name.last.length ||
-                !email.length
-              }
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <Image
+              source={require("assets/images/home_church.png")}
+              style={styles.logo}
+              resizeMode="contain"
             />
-          )}
-        </View>
-      </ImageBackground>
-    </View>
+            <Text style={styles.title}>HOME CHURCH</Text>
+            <Text style={styles.subtitle}>Security Team</Text>
+          </View>
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="jon@gmail.com"
+              style={styles.input}
+              autoCapitalize="none"
+            />
+
+            <Text style={styles.label}>First Name</Text>
+            <TextInput
+              value={name.first}
+              onChangeText={(v) => setName((prev) => ({ ...prev, first: v }))}
+              placeholder="jon"
+              style={styles.input}
+              autoCapitalize="none"
+            />
+
+            <Text style={styles.label}>Last Name</Text>
+            <TextInput
+              value={name.last}
+              onChangeText={(v) => setName((prev) => ({ ...prev, last: v }))}
+              placeholder="Snow"
+              style={styles.input}
+              autoCapitalize="none"
+            />
+
+            {codeSent ? (
+              <>
+                <Text style={styles.label}>One time code</Text>
+                <TextInput
+                  value={token}
+                  onChangeText={setToken}
+                  placeholder="*****"
+                  style={styles.input}
+                  secureTextEntry
+                />
+                <Button text="Submit" onPress={verifyOtp} />
+              </>
+            ) : (
+              <Button
+                text={cooldown > 0 ? `Resend in ${cooldown}s` : "Send Code"}
+                onPress={sendOtp}
+                disabled={
+                  cooldown > 0 ||
+                  !name.first.length ||
+                  !name.last.length ||
+                  !email.length
+                }
+              />
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
+
+const GOLD = "#D4BE8F";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    backgroundColor: "#000",
+    paddingHorizontal: 32,
+    paddingTop: 40,
   },
+
+  header: {
+    alignItems: "center",
+    marginTop: 40,
+    marginBottom: 15,
+  },
+
+  logo: {
+    width: 120,
+    height: 120,
+  },
+
+  title: {
+    color: GOLD,
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: 2,
+    marginTop: 12,
+  },
+
+  subtitle: {
+    fontSize: 13,
+    letterSpacing: 1,
+    color: "#8A8A8A",
+  },
+
   formContainer: {
-    width: "90%",
-    margin: "auto",
+    width: "100%",
+    backgroundColor: "#111111",
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: "rgba(212,190,143,0.55)",
+    padding: 24,
+
+    shadowColor: GOLD,
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    elevation: 6,
   },
+
   label: {
-    color: "gray",
+    color: GOLD,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 8,
   },
+
   input: {
-    borderWidth: 1,
-    borderColor: "gray",
-    padding: 10,
-    marginTop: 5,
-    marginBottom: 20,
-    backgroundColor: "white",
-    borderRadius: 5,
+    height: 56,
+    backgroundColor: "#FFF",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+    fontSize: 16,
   },
 });
-
 export default Login;

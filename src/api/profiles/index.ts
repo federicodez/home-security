@@ -1,7 +1,7 @@
 import { supabase } from "@/utils/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
-import type { VolunteerWithAssignments } from "@/types";
+import type { VolunteerWithAssignments, AvailabilityUpdate } from "@/types";
 
 export type VolunteerService = {
   service_id: string;
@@ -151,3 +151,45 @@ export const useUpdateVolunteering = () => {
     },
   });
 };
+
+export function useUpdateAvailability() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (values: AvailabilityUpdate) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("No user");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(values)
+        .eq("id", user?.id);
+
+      if (error) throw error;
+    },
+
+    onMutate: async (values) => {
+      await queryClient.cancelQueries({ queryKey: ["profile"] });
+
+      const previousProfile = queryClient.getQueryData(["profile"]);
+
+      queryClient.setQueryData(["profile"], (old: any) => ({
+        ...old,
+        ...values,
+      }));
+
+      return { previousProfile };
+    },
+
+    onError: (_error, _values, context) => {
+      queryClient.setQueryData(["profile"], context?.previousProfile);
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+  });
+}

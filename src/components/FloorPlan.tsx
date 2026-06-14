@@ -10,9 +10,10 @@ import PaginationDots from "./PaginationDots";
 
 interface FloorPlanProps {
   serviceId: string;
+  serviceTime: string;
 }
 
-export default function FloorPlan({ serviceId }: FloorPlanProps) {
+export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
   const pagerRef = useRef<PagerView>(null);
   const [page, setPage] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,6 +45,7 @@ export default function FloorPlan({ serviceId }: FloorPlanProps) {
       >
         <View key="main" style={{ flex: 1 }}>
           <Main
+            serviceTime={serviceTime}
             serviceId={serviceId}
             modalVisible={modalVisible}
             onModalVisible={setModalVisible}
@@ -56,6 +58,7 @@ export default function FloorPlan({ serviceId }: FloorPlanProps) {
 
         <View key="outside" style={{ flex: 1 }}>
           <Outside
+            serviceTime={serviceTime}
             serviceId={serviceId}
             modalVisible={modalVisible}
             onModalVisible={setModalVisible}
@@ -68,6 +71,7 @@ export default function FloorPlan({ serviceId }: FloorPlanProps) {
 
         <View key="kids" style={{ flex: 1 }}>
           <HomeKids
+            serviceTime={serviceTime}
             serviceId={serviceId}
             modalVisible={modalVisible}
             onModalVisible={setModalVisible}

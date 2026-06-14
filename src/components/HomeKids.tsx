@@ -1,10 +1,19 @@
-import Svg, { Circle, G, Line, Path, Rect, Text } from "react-native-svg";
-import { ImageBackground } from "react-native";
+import Svg, {
+  Circle,
+  G,
+  Line,
+  Path,
+  Rect,
+  Text as SVGText,
+} from "react-native-svg";
+import { StyleSheet, View, Image, Text } from "react-native";
+import { defaultStyles } from "@/constants/Styles";
 import UsersModal from "./UsersModal";
 import Station from "./Station";
 import type { AssignmentWithRelations } from "@/types";
 
 type KidsFloorProps = {
+  serviceTime: string;
   serviceId: string;
   modalVisible: boolean;
   onModalVisible: (modal: boolean) => void;
@@ -15,6 +24,7 @@ type KidsFloorProps = {
 };
 
 export default function KidsFloorPlan({
+  serviceTime,
   serviceId,
   modalVisible,
   onModalVisible,
@@ -28,36 +38,13 @@ export default function KidsFloorPlan({
   );
   return (
     assignment && (
-      <ImageBackground
-        source={require("assets/images/home_church.png")}
-        resizeMode="repeat"
-        style={{ flex: 1 }}
-      >
-        <Svg width="100%" height="100%" viewBox="0 0 390 760">
-          <Rect x="35" y="80" width="320" height="610" fill="black" />
-
-          {/* title */}
-          <Text
-            x="195"
-            y="42"
-            fill="white"
-            fontSize="24"
-            fontWeight="bold"
-            textAnchor="middle"
-          >
-            Kids Area
-          </Text>
-
-          {/* outer building */}
-          <Rect
-            x="35"
-            y="80"
-            width="320"
-            height="610"
-            stroke="lime"
-            strokeWidth={2}
-            fill="none"
-          />
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Home Kids</Text>
+          <Text style={styles.subtitle}>{serviceTime} Service</Text>
+        </View>
+        <Svg width="100%" height="100%" viewBox="0 0 400 760">
+          <Rect x="10" y="80" width="340" height="610" fill="black" />
 
           {/* hallway */}
           <Rect
@@ -65,21 +52,21 @@ export default function KidsFloorPlan({
             y="80"
             width="90"
             height="610"
-            stroke="cyan"
+            stroke={defaultStyles.primary}
             strokeWidth={2}
             fill="none"
           />
 
-          <Text
+          <SVGText
             x="195"
             y="385"
-            fill="cyan"
+            fill={defaultStyles.primary}
             fontSize="16"
             fontWeight="bold"
             textAnchor="middle"
           >
             Hallway
-          </Text>
+          </SVGText>
 
           {/* left big room */}
           <Rect
@@ -87,31 +74,31 @@ export default function KidsFloorPlan({
             y="80"
             width="115"
             height="610"
-            stroke="white"
+            stroke={defaultStyles.primary}
             strokeWidth={2}
             fill="none"
           />
 
-          <Text
+          <SVGText
             x="92"
             y="360"
-            fill="white"
+            fill={defaultStyles.primary}
             fontSize="16"
             fontWeight="bold"
             textAnchor="middle"
           >
             Big
-          </Text>
-          <Text
+          </SVGText>
+          <SVGText
             x="92"
             y="382"
-            fill="white"
+            fill={defaultStyles.primary}
             fontSize="16"
             fontWeight="bold"
             textAnchor="middle"
           >
             Room
-          </Text>
+          </SVGText>
 
           {/* Room 1 */}
           <Rect
@@ -119,7 +106,7 @@ export default function KidsFloorPlan({
             y={80}
             width={115}
             height={270}
-            stroke="white"
+            stroke={defaultStyles.primary}
             strokeWidth={2}
             fill="none"
           />
@@ -130,32 +117,32 @@ export default function KidsFloorPlan({
             y={480}
             width={115}
             height={210}
-            stroke="white"
+            stroke={defaultStyles.primary}
             strokeWidth={2}
             fill="none"
           />
 
-          <Text
+          <SVGText
             x="298"
             y="220"
-            fill="white"
+            fill={defaultStyles.primary}
             fontSize="16"
             fontWeight="bold"
             textAnchor="middle"
           >
             Room 1
-          </Text>
+          </SVGText>
 
-          <Text
+          <SVGText
             x="298"
             y="540"
-            fill="white"
+            fill={defaultStyles.primary}
             fontSize="16"
             fontWeight="bold"
             textAnchor="middle"
           >
             Room 2
-          </Text>
+          </SVGText>
 
           {/* Bathroom */}
           <Rect
@@ -163,21 +150,21 @@ export default function KidsFloorPlan({
             y={350}
             width={115}
             height={130}
-            stroke="white"
+            stroke={defaultStyles.primary}
             strokeWidth={2}
             fill="none"
           />
 
-          <Text
+          <SVGText
             x={298}
             y={395}
-            fill="white"
+            fill={defaultStyles.primary}
             fontSize={16}
             fontWeight="bold"
             textAnchor="middle"
           >
             Bathroom
-          </Text>
+          </SVGText>
 
           {/* toilet */}
           <Rect
@@ -202,7 +189,13 @@ export default function KidsFloorPlan({
             fill="none"
           />
           <Circle cx={330} cy={440} r={3} fill="white" />
-          <Line x1={330} y1={430} x2={330} y2={440} stroke="white" />
+          <Line
+            x1={330}
+            y1={430}
+            x2={330}
+            y2={440}
+            stroke={defaultStyles.primary}
+          />
 
           {/* hallway edges */}
           <Line
@@ -210,7 +203,7 @@ export default function KidsFloorPlan({
             y1="80"
             x2="150"
             y2="690"
-            stroke="cyan"
+            stroke="rgba(212,190,143,0.7)"
             strokeWidth={2}
           />
           <Line
@@ -218,7 +211,7 @@ export default function KidsFloorPlan({
             y1="80"
             x2="240"
             y2="690"
-            stroke="cyan"
+            stroke="rgba(212,190,143,0.7)"
             strokeWidth={2}
           />
 
@@ -272,7 +265,7 @@ export default function KidsFloorPlan({
           {/* room 2 door*/}
           <Door x={240} y={560} direction="right" />
         </Svg>
-      </ImageBackground>
+      </View>
     )
   );
 }
@@ -308,7 +301,7 @@ function Stairs({
         y={y}
         width={width}
         height={height}
-        stroke="white"
+        stroke={defaultStyles.primary}
         fill="none"
       />
 
@@ -320,23 +313,23 @@ function Stairs({
           y1={y}
           x2={x + 10 + i * 12}
           y2={y + height}
-          stroke="white"
+          stroke={defaultStyles.primary}
         />
       ))}
 
       {/* direction arrow */}
-      <Path d={arrow} fill="white" />
+      <Path d={arrow} fill={defaultStyles.primary} />
 
-      <Text
+      <SVGText
         x={x + width / 2}
         y={y + height + 16}
-        fill="white"
+        fill={defaultStyles.primary}
         fontSize="11"
         fontWeight="bold"
         textAnchor="middle"
       >
         {label}
-      </Text>
+      </SVGText>
     </G>
   );
 }
@@ -420,3 +413,47 @@ function Door({
     </G>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "black",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+  header: {
+    position: "absolute",
+    top: 14,
+    left: 20,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: "rgba(17,17,17,0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(212,190,143,0.45)",
+    borderRadius: 18,
+    padding: 14,
+  },
+
+  title: {
+    color: "#D4BE8F",
+    fontSize: 32,
+    fontWeight: "800",
+  },
+
+  subtitle: {
+    color: "#9CA3AF",
+    fontSize: 16,
+    marginTop: 4,
+  },
+
+  floorPlanCard: {
+    flex: 1,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "rgba(212,190,143,0.45)",
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#050505",
+  },
+});

@@ -29,7 +29,7 @@ export default function PaginationDots({
             height: 12,
             borderRadius: 6,
             backgroundColor:
-              index === current ? "lime" : "rgba(255,255,255,0.35)",
+              index === current ? "#D4BE8F" : "rgba(255,255,255,0.25)",
           }}
         />
       ))}

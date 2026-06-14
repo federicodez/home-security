@@ -1,4 +1,5 @@
 import { Circle, G, Text } from "react-native-svg";
+import { defaultStyles } from "@/constants/Styles";
 import { getInitials } from "@/utils/helpers";
 import type { AssignmentWithRelations } from "@/types";
 
@@ -37,7 +38,7 @@ export default function Station({
           alignmentBaseline="middle"
           fontSize="12"
           fontWeight="bold"
-          fill="black"
+          fill={defaultStyles.secondary}
         >
           {/* invisible hit target */}
           <Circle
@@ -51,8 +52,8 @@ export default function Station({
             cx={assignment.position.x}
             cy={assignment.position.y}
             r={18}
-            fill="#22C55E"
-            stroke="white"
+            fill={defaultStyles.primary}
+            stroke={defaultStyles.lighter}
             strokeWidth={2}
           />
           {assignment.station}
@@ -61,14 +62,14 @@ export default function Station({
           x={assignment.position.x}
           y={assignment.position.y - 30}
           textAnchor="middle"
-          fill="white"
+          fill={defaultStyles.lighter}
           fontSize="18"
           fontWeight="bold"
         >
           <Circle
             cx={assignment.position.x}
             cy={assignment.position.y - 35}
-            fill="black"
+            fill={defaultStyles.secondary}
             r={15}
             opacity={0.9}
           />
@@ -97,8 +98,8 @@ export default function Station({
         cx={assignment.position.x}
         cy={assignment.position.y}
         r={18}
-        fill="#374151"
-        stroke="white"
+        fill="#1F2937"
+        stroke={defaultStyles.primary}
         strokeWidth={2}
       />
 
@@ -110,7 +111,7 @@ export default function Station({
         alignmentBaseline="middle"
         fontSize="12"
         fontWeight="bold"
-        fill="white"
+        fill={defaultStyles.lighter}
       >
         {assignment.station}
       </Text>

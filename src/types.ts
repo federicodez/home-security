@@ -39,3 +39,17 @@ export type VolunteerWithAssignments = Pick<
     };
   }[];
 };
+
+export const AVAILABILITY_FIELDS = {
+  available_8am: "available_8am",
+  available_930am: "available_930am",
+  available_11am: "available_11am",
+} as const;
+
+export type AvailabilityField = keyof typeof AVAILABILITY_FIELDS;
+
+export type AvailabilityUpdate = {
+  [AVAILABILITY_FIELDS.available_8am]?: boolean;
+  [AVAILABILITY_FIELDS.available_930am]?: boolean;
+  [AVAILABILITY_FIELDS.available_11am]?: boolean;
+};

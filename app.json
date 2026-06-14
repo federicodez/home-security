@@ -4,7 +4,7 @@
     "slug": "home-security",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/home_church.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "homesecurity",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,6 +16,7 @@
       }
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -31,12 +32,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/home_church.png",
-          "imageWidth": 200,
+          "image": "./assets/images/home_church_bg.jpg",
+          "imageWidth": 300,
           "resizeMode": "contain",
-          "backgroundColor": "#000000",
+          "backgroundColor": "#0B0B0B",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0B0B0B"
           }
         }
       ],

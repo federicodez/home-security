@@ -1,5 +1,7 @@
 export const defaultStyles = {
-  primary: "#24293e",
-  secondary: "#2f3651",
-  blue: "#8ebbff",
+  primary: "#D4BE8F",
+  darker: "#C8B07C",
+  lighter: "#E0CFA5",
+  secondary: "#0B0B0B",
+  darkCard: "#1A1A1A",
 };
