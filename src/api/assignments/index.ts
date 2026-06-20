@@ -68,6 +68,9 @@ export const useUpdateAssignment = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 };
