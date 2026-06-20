@@ -144,6 +144,7 @@ export default function Main({
 
         {/* User selection modal */}
         <UsersModal
+          serviceId={serviceId}
           modalVisible={modalVisible}
           onModalVisible={onModalVisible}
           onAssign={onAssign}

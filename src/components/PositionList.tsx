@@ -23,7 +23,7 @@ const PositionList = ({
 }: PositionListProps) =>
   assignments
     ?.filter(({ service: { id } }) => id === serviceId)
-    .filter(({ station }) => !["A", "I", "K"].includes(station))
+    .filter(({ station }) => !["O1", "O2", "K"].includes(station))
     .map((assignment) => (
       <G key={assignment.id}>
         <Station

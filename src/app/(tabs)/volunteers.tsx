@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
-  Switch,
   StyleSheet,
+  Pressable,
   View,
   Text,
   ScrollView,
@@ -12,9 +13,13 @@ import {
   useProfile,
   useUpdateAvailability,
 } from "@/api/profiles";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import Availability from "@/components/Availability";
+import VolunteerDetailsModal from "@/components/VolunteerDetailsModal";
+import { defaultStyles } from "@/constants/Styles";
 
 export default function Tab() {
+  const [visible, setVisible] = useState(false);
   const { data: user } = useProfile();
   const { data: volunteers } = useVolunteerAssignments();
   const { mutate: updateAvailability } = useUpdateAvailability();
@@ -25,125 +30,101 @@ export default function Tab() {
     user?.available_11am,
   ].filter(Boolean).length;
 
+  const userAssignments = volunteers?.find((v) => v.user_id === user?.id);
+
+  const assigned8am = userAssignments?.services?.some(
+    (s) => s.service_name === "8am" && s.station,
+  );
+
+  const assigned930am = userAssignments?.services?.some(
+    (s) => s.service_name === "9:30am" && s.station,
+  );
+
+  const assigned11am = userAssignments?.services?.some(
+    (s) => s.service_name === "11am" && s.station,
+  );
+
+  const handleModal = () => setVisible(!visible);
   return (
-    <SafeAreaView style={styles.screen}>
-      <Image
-        source={require("assets/images/home_church.png")}
-        resizeMode="contain"
-        style={styles.watermark}
-      />
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.screen}>
+        <Image
+          source={require("assets/images/home_church.png")}
+          resizeMode="contain"
+          style={styles.watermark}
+        />
 
-      <View style={styles.header}>
-        <Text style={styles.title}>Roster</Text>
-        <Text style={styles.subtitle}>Service assignments</Text>
-      </View>
-
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {volunteers?.map(({ user_id, full_name, services }) => (
-          <View key={user_id} style={styles.card}>
-            <Text style={styles.name}>{full_name?.toUpperCase()}</Text>
-
-            {services.map(({ station, service_name }) => (
-              <View key={service_name} style={styles.assignmentRow}>
-                <Text style={styles.service}>{service_name}</Text>
-                <Text
-                  style={[
-                    styles.station,
-                    station ? styles.assigned : styles.unassigned,
-                  ]}
-                >
-                  {station ? `Station ${station}` : "Unassigned"}
-                </Text>
-              </View>
-            ))}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Roster</Text>
+            <Text style={styles.subtitle}>Service assignments</Text>
           </View>
-        ))}
-      </ScrollView>
 
-      <View style={styles.availabilityCard}>
-        <Text style={styles.availabilityTitle}>Service Availability</Text>
-        <Text style={styles.subtitle}>
-          {availableCount} / 3 Services Available
-        </Text>
+          <View style={styles.volunteersCard}>
+            <View style={styles.volunteersHeader}>
+              <Text style={styles.sectionTitle}>Volunteers</Text>
+              <Text style={styles.helperText}>View details</Text>
+            </View>
 
-        <View style={styles.availabilityRow}>
-          <Text
-            style={[
-              styles.serviceLabel,
-              { opacity: user?.available_8am ? 1 : 0.5 },
-            ]}
-          >
-            <Ionicons name="shield-outline" size={20} color="#D4BE8C" />
-            8:00 AM
-          </Text>
+            {volunteers?.map(({ user_id, full_name, services }) => {
+              const assignedCount =
+                services?.filter((s) => s.station).length ?? 0;
 
-          <Switch
-            value={user?.available_8am ?? false}
-            onValueChange={(value) =>
-              updateAvailability({ available_8am: value })
-            }
-            trackColor={{
-              false: "#3A3A3A",
-              true: "#22C55E",
-            }}
-          />
-        </View>
+              return (
+                <Pressable
+                  key={user_id}
+                  style={styles.volunteerRow}
+                  onPress={handleModal}
+                >
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {full_name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </Text>
+                  </View>
 
-        <View style={styles.availabilityRow}>
-          <Text
-            style={[
-              styles.serviceLabel,
-              { opacity: user?.available_930am ? 1 : 0.5 },
-            ]}
-          >
-            <Ionicons name="shield-outline" size={20} color="#D4BE8C" />
-            9:30 AM
-          </Text>
+                  <View style={styles.volunteerInfo}>
+                    <Text style={styles.name}>{full_name?.toUpperCase()}</Text>
+                    <Text style={styles.summary}>
+                      {assignedCount} / 3 Services Assigned
+                    </Text>
+                  </View>
 
-          <Switch
-            value={user?.available_930am ?? false}
-            onValueChange={(value) =>
-              updateAvailability({ available_930am: value })
-            }
-            trackColor={{
-              false: "#3A3A3A",
-              true: "#22C55E",
-            }}
-          />
-        </View>
-
-        <View style={styles.availabilityRow}>
-          <Text
-            style={[
-              styles.serviceLabel,
-              { opacity: user?.available_11am ? 1 : 0.5 },
-            ]}
-          >
-            <Ionicons name="shield-outline" size={20} color="#D4BE8C" />
-            11:00 AM
-          </Text>
-
-          <Switch
-            value={user?.available_11am ?? false}
-            onValueChange={(value) =>
-              updateAvailability({ available_11am: value })
-            }
-            trackColor={{
-              false: "#3A3A3A",
-              true: "#22C55E",
-            }}
-          />
-        </View>
-      </View>
-    </SafeAreaView>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={24}
+                    color={defaultStyles.primary}
+                  />
+                  {visible && (
+                    <VolunteerDetailsModal
+                      visible={visible}
+                      full_name={full_name}
+                      assignedCount={assignedCount}
+                      services={services}
+                      onClose={handleModal}
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
+        <Availability
+          user={user}
+          assigned8am={assigned8am}
+          assigned930am={assigned930am}
+          assigned11am={assigned11am}
+          availableCount={availableCount}
+          onUpdateAvailability={updateAvailability}
+        />
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
-
-const GOLD = "#D4BE8F";
 
 const styles = StyleSheet.create({
   screen: {
@@ -168,13 +149,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(212,190,143,0.55)",
     borderRadius: 18,
-    padding: 16,
+    padding: 8,
     marginBottom: 18,
   },
 
   title: {
-    color: GOLD,
-    fontSize: 34,
+    color: defaultStyles.primary,
+    fontSize: 24,
     fontWeight: "800",
   },
 
@@ -184,24 +165,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  list: {
-    flex: 1,
-  },
-
-  listContent: {
-    paddingBottom: 20,
-  },
-
   card: {
     backgroundColor: "#111111",
     borderRadius: 22,
     borderWidth: 1,
     borderColor: "rgba(212,190,143,0.4)",
     padding: 18,
+    marginBottom: 18,
   },
 
   name: {
-    color: GOLD,
+    color: defaultStyles.primary,
     fontSize: 18,
     fontWeight: "800",
     marginBottom: 12,
@@ -228,60 +202,74 @@ const styles = StyleSheet.create({
   },
 
   assigned: {
-    color: GOLD,
+    color: defaultStyles.primary,
   },
 
   unassigned: {
     color: "#6B7280",
   },
-
-  footer: {
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-  availabilityCard: {
-    backgroundColor: "#0A0A0A",
+  volunteersCard: {
+    backgroundColor: "#111111",
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#D4BE8C55",
-    borderRadius: 24,
-    padding: 24,
-    marginHorizontal: 24,
-    fontSize: 18,
-    fontWeight: "700",
+    borderColor: "rgba(212,190,143,0.4)",
+    padding: 18,
+    marginBottom: 18,
   },
 
-  availabilityTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#A0A3B1",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-
-  availabilityRow: {
+  volunteersHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+
+  sectionTitle: {
+    color: defaultStyles.primary,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  helperText: {
+    color: "#9CA3AF",
+    fontSize: 13,
+  },
+
+  volunteerRow: {
+    flexDirection: "row",
     alignItems: "center",
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.08)",
   },
 
-  serviceLabel: {
-    fontSize: 18,
-    color: "#D4BE8C",
-    fontWeight: "600",
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: defaultStyles.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
   },
 
-  onText: {
-    color: "#22C55E",
-    fontSize: 18,
-    fontWeight: "700",
+  avatarText: {
+    color: defaultStyles.primary,
+    fontSize: 16,
+    fontWeight: "800",
   },
 
-  offText: {
-    color: "#6B7280",
-    fontSize: 18,
+  volunteerInfo: {
+    flex: 1,
+  },
+
+  summary: {
+    color: "#9CA3AF",
+    fontSize: 15,
     fontWeight: "700",
+    marginTop: 4,
   },
 });

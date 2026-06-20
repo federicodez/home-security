@@ -6,10 +6,11 @@ import Svg, {
   Rect,
   Text as SVGText,
 } from "react-native-svg";
-import { StyleSheet, View, Image, Text } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { defaultStyles } from "@/constants/Styles";
 import UsersModal from "./UsersModal";
 import Station from "./Station";
+import Door from "./Door";
 import type { AssignmentWithRelations } from "@/types";
 
 type KidsFloorProps = {
@@ -43,14 +44,12 @@ export default function KidsFloorPlan({
           <Text style={styles.title}>Home Kids</Text>
           <Text style={styles.subtitle}>{serviceTime} Service</Text>
         </View>
-        <Svg width="100%" height="100%" viewBox="0 0 400 760">
-          <Rect x="10" y="80" width="340" height="610" fill="black" />
-
+        <Svg width="100%" height="100%" viewBox="35 75 320 620">
           {/* hallway */}
           <Rect
             x="150"
             y="80"
-            width="90"
+            width="100"
             height="610"
             stroke={defaultStyles.primary}
             strokeWidth={2}
@@ -102,9 +101,9 @@ export default function KidsFloorPlan({
 
           {/* Room 1 */}
           <Rect
-            x={240}
+            x={250}
             y={80}
-            width={115}
+            width={120}
             height={270}
             stroke={defaultStyles.primary}
             strokeWidth={2}
@@ -113,9 +112,9 @@ export default function KidsFloorPlan({
 
           {/* Room 2 */}
           <Rect
-            x={240}
+            x={250}
             y={480}
-            width={115}
+            width={120}
             height={210}
             stroke={defaultStyles.primary}
             strokeWidth={2}
@@ -146,9 +145,9 @@ export default function KidsFloorPlan({
 
           {/* Bathroom */}
           <Rect
-            x={240}
+            x={250}
             y={350}
-            width={115}
+            width={120}
             height={130}
             stroke={defaultStyles.primary}
             strokeWidth={2}
@@ -197,24 +196,6 @@ export default function KidsFloorPlan({
             stroke={defaultStyles.primary}
           />
 
-          {/* hallway edges */}
-          <Line
-            x1="150"
-            y1="80"
-            x2="150"
-            y2="690"
-            stroke="rgba(212,190,143,0.7)"
-            strokeWidth={2}
-          />
-          <Line
-            x1="240"
-            y1="80"
-            x2="240"
-            y2="690"
-            stroke="rgba(212,190,143,0.7)"
-            strokeWidth={2}
-          />
-
           {/* top stairs at hallway edge */}
           <Stairs
             x={45}
@@ -238,6 +219,7 @@ export default function KidsFloorPlan({
 
           {/* User selection modal */}
           <UsersModal
+            serviceId={serviceId}
             modalVisible={modalVisible}
             onModalVisible={onModalVisible}
             onAssign={onAssign}
@@ -259,11 +241,11 @@ export default function KidsFloorPlan({
           <Door x={150} y={565} direction="left" />
           <Door x={150} y={265} direction="left" />
           {/* room 1 door*/}
-          <Door x={240} y={250} direction="right" />
+          <Door x={250} y={250} direction="right" />
           {/* bathroom  door*/}
-          <Door x={240} y={410} direction="right" />
+          <Door x={250} y={410} direction="right" />
           {/* room 2 door*/}
-          <Door x={240} y={560} direction="right" />
+          <Door x={250} y={560} direction="right" />
         </Svg>
       </View>
     )
@@ -334,126 +316,34 @@ function Stairs({
   );
 }
 
-function Door({
-  x,
-  y,
-  size = 28,
-  direction,
-}: {
-  x: number;
-  y: number;
-  size?: number;
-  direction: "left" | "right" | "up" | "down";
-}) {
-  let wallLine = null;
-  let arcPath = "";
-
-  switch (direction) {
-    case "right":
-      wallLine = (
-        <Line
-          x1={x}
-          y1={y}
-          x2={x}
-          y2={y + size}
-          stroke="white"
-          strokeWidth={2}
-        />
-      );
-      arcPath = `M ${x} ${y} A ${size} ${size} 0 0 1 ${x + size} ${y + size}`;
-      break;
-
-    case "left":
-      wallLine = (
-        <Line
-          x1={x}
-          y1={y}
-          x2={x}
-          y2={y + size}
-          stroke="white"
-          strokeWidth={2}
-        />
-      );
-      arcPath = `M ${x} ${y + size} A ${size} ${size} 0 0 1 ${x - size} ${y}`;
-      break;
-
-    case "down":
-      wallLine = (
-        <Line
-          x1={x}
-          y1={y}
-          x2={x + size}
-          y2={y}
-          stroke="white"
-          strokeWidth={2}
-        />
-      );
-      arcPath = `M ${x} ${y} A ${size} ${size} 0 0 1 ${x + size} ${y + size}`;
-      break;
-
-    case "up":
-      wallLine = (
-        <Line
-          x1={x}
-          y1={y}
-          x2={x + size}
-          y2={y}
-          stroke="white"
-          strokeWidth={2}
-        />
-      );
-      arcPath = `M ${x + size} ${y} A ${size} ${size} 0 0 1 ${x} ${y - size}`;
-      break;
-  }
-
-  return (
-    <G>
-      {wallLine}
-      <Path d={arcPath} stroke="white" strokeWidth={2} fill="none" />
-    </G>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "black",
-    position: "relative",
-    overflow: "hidden",
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 105,
   },
 
   header: {
-    position: "absolute",
-    top: 14,
-    left: 20,
-    right: 20,
-    zIndex: 10,
-    backgroundColor: "rgba(17,17,17,0.85)",
+    backgroundColor: "rgba(17,17,17,0.96)",
     borderWidth: 1,
-    borderColor: "rgba(212,190,143,0.45)",
+    borderColor: "rgba(212,190,143,0.55)",
     borderRadius: 18,
-    padding: 14,
+    padding: 16,
+    marginBottom: 18,
   },
 
   title: {
     color: "#D4BE8F",
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: "800",
+    letterSpacing: 1,
   },
 
   subtitle: {
     color: "#9CA3AF",
     fontSize: 16,
     marginTop: 4,
-  },
-
-  floorPlanCard: {
-    flex: 1,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: "rgba(212,190,143,0.45)",
-    borderRadius: 24,
-    overflow: "hidden",
-    backgroundColor: "#050505",
   },
 });

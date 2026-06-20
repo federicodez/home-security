@@ -84,10 +84,19 @@ export function useVolunteerAssignments() {
   });
 }
 
-export const useVolunteers = () => {
+export const useVolunteers = (serviceId: string) => {
   return useQuery({
-    queryKey: ["volunteers"],
+    queryKey: ["volunteers", serviceId],
+    enabled: !!serviceId,
     queryFn: async () => {
+      const { data: service, error: serviceError } = await supabase
+        .from("services")
+        .select("availability_column")
+        .eq("id", serviceId)
+        .single();
+
+      if (serviceError) throw serviceError;
+
       const { data, error } = await supabase
         .from("profiles")
         .select(
@@ -111,7 +120,7 @@ export const useVolunteers = () => {
           )
         `,
         )
-        .eq("volunteering", true)
+        .eq(service.availability_column, true)
         .order("full_name");
 
       if (error) throw error;
@@ -189,6 +198,12 @@ export function useUpdateAvailability() {
     },
 
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });

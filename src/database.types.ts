@@ -125,18 +125,21 @@ export type Database = {
       }
       services: {
         Row: {
+          availability_column: string
           created_at: string | null
           id: string
           name: string
           starts_at: string
         }
         Insert: {
+          availability_column: string
           created_at?: string | null
           id?: string
           name: string
           starts_at: string
         }
         Update: {
+          availability_column?: string
           created_at?: string | null
           id?: string
           name?: string

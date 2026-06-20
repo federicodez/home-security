@@ -22,7 +22,7 @@ export default function FloorPlansPager({
 }: FloorPlansPagerProps) {
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.centeredView} edges={["top"]}>
+      <SafeAreaView style={styles.centeredView}>
         <FlatList
           data={floorPlans}
           horizontal
@@ -41,62 +41,10 @@ export default function FloorPlansPager({
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContainer: {
-    width: "80%",
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  option: {
-    padding: 10,
-    borderBottomColor: "#ccc",
-    borderBottomWidth: 1,
-  },
-  optionText: {
-    fontSize: 18,
-  },
-  scrollView: {
-    marginBottom: 20,
-  },
   centeredView: {
     flex: 1,
+    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
-  },
-  modalView: {
-    margin: 90,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 50,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  textStyle: {
-    fontWeight: "bold",
-    textAlign: "center",
-    marginTop: 20,
-    borderBottomColor: "black",
-    borderBottomWidth: 2,
   },
 });

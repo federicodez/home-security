@@ -138,6 +138,7 @@ const Login = () => {
               <>
                 <Text style={styles.label}>One time code</Text>
                 <TextInput
+                  keyboardType="numeric"
                   value={token}
                   onChangeText={setToken}
                   placeholder="*****"
