@@ -2,11 +2,12 @@ import { supabase } from "@/utils/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { AssignmentWithRelations } from "@/types";
 
-export const useAssignmentList = () => {
+export const useAssignmentList = (serviceId?: string) => {
   return useQuery({
-    queryKey: ["assignments"],
+    queryKey: ["assignments", serviceId],
+
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("assignments")
         .select(
           `
@@ -25,7 +26,9 @@ export const useAssignmentList = () => {
             email,
             avatar_url,
             role,
-            volunteering
+            available_8am,
+            available_930am,
+            available_11am
           ),
           position:station (
             station,
@@ -36,11 +39,20 @@ export const useAssignmentList = () => {
         )
         .order("station");
 
-      if (error) {
-        throw new Error(error.message);
+      if (serviceId) {
+        query = query.eq("service_id", serviceId);
       }
+
+      const { data, error } = await query;
+
+      if (error) throw new Error(error.message);
+
       return data as unknown as AssignmentWithRelations[];
     },
+
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
   });
 };
 

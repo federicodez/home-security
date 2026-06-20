@@ -19,7 +19,7 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [position, setPosition] = useState("");
 
-  const { data: assignments } = useAssignmentList();
+  const { data: assignments } = useAssignmentList(serviceId);
   const { mutate: updatePosition } = useUpdateAssignment();
 
   const handleAssign = (profileId: string) => {

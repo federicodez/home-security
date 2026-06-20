@@ -106,7 +106,6 @@ export const useVolunteers = (serviceId: string) => {
           email,
           avatar_url,
           role,
-          volunteering,
 
           assignments (
             station,
@@ -126,37 +125,6 @@ export const useVolunteers = (serviceId: string) => {
       if (error) throw error;
 
       return data as unknown as VolunteerWithAssignments[];
-    },
-  });
-};
-
-export const useUpdateVolunteering = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (volunteering: boolean) => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) throw new Error("No logged in user");
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({ volunteering })
-        .eq("id", user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return data;
-    },
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["profile"],
-      });
     },
   });
 };

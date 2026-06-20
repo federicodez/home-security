@@ -13,6 +13,7 @@ import React, { useState } from "react";
 import Button from "@/components/Button";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/utils/supabase";
+import { defaultStyles } from "@/constants/Styles";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -81,7 +82,9 @@ const Login = () => {
         id: user.id,
         email: user.email,
         full_name: `${name.first} ${name.last}`,
-        volunteering: false,
+        available_8am: false,
+        available_930am: false,
+        available_11am: false,
       },
       { onConflict: "id" },
     );
@@ -166,8 +169,6 @@ const Login = () => {
   );
 };
 
-const GOLD = "#D4BE8F";
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: GOLD,
+    color: defaultStyles.primary,
     fontSize: 28,
     fontWeight: "800",
     letterSpacing: 2,
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(212,190,143,0.55)",
     padding: 24,
 
-    shadowColor: GOLD,
+    shadowColor: defaultStyles.primary,
     shadowOpacity: 0.12,
     shadowRadius: 18,
     shadowOffset: {
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    color: GOLD,
+    color: defaultStyles.primary,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 8,

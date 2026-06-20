@@ -95,7 +95,6 @@ export type Database = {
           full_name: string | null;
           id: string;
           role: string | null;
-          volunteering: boolean | null;
         };
         Insert: {
           available_11am?: boolean | null;
@@ -107,7 +106,6 @@ export type Database = {
           full_name?: string | null;
           id: string;
           role?: string | null;
-          volunteering?: boolean | null;
         };
         Update: {
           available_11am?: boolean | null;
@@ -119,7 +117,6 @@ export type Database = {
           full_name?: string | null;
           id?: string;
           role?: string | null;
-          volunteering?: boolean | null;
         };
         Relationships: [];
       };

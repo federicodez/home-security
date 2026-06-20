@@ -16,8 +16,10 @@ export type AssignmentWithRelations = AssignmentRow & {
     | "email"
     | "avatar_url"
     | "role"
-    | "volunteering"
     | "created_at"
+    | "available_8am"
+    | "available_930am"
+    | "available_11am"
   > | null;
 
   service: Pick<ServiceRow, "id" | "name" | "starts_at">;
@@ -27,7 +29,14 @@ export type AssignmentWithRelations = AssignmentRow & {
 
 export type VolunteerWithAssignments = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
-  "id" | "full_name" | "email" | "avatar_url" | "role" | "volunteering"
+  | "id"
+  | "full_name"
+  | "email"
+  | "avatar_url"
+  | "role"
+  | "available_8am"
+  | "available_930am"
+  | "available_11am"
 > & {
   assignments: {
     station: string;
