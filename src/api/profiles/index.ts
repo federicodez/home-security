@@ -199,6 +199,8 @@ export function useUpdateAvailability() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
