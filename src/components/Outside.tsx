@@ -242,6 +242,7 @@ export default function Outside({
             modalVisible={modalVisible}
             onModalVisible={onModalVisible}
             onAssign={onAssign}
+            assignments={assignments}
           />
 
           <Station

@@ -10,12 +10,14 @@ import {
 } from "react-native";
 import { useVolunteers } from "@/api/profiles";
 import { defaultStyles } from "@/constants/Styles";
+import type { AssignmentWithRelations } from "@/types";
 
 interface UsersModalProps {
   serviceId: string;
   modalVisible: boolean;
   onModalVisible: (value: boolean) => void;
   onAssign: (user: string) => void;
+  assignments?: AssignmentWithRelations[];
 }
 
 const UsersModal = ({
@@ -23,6 +25,7 @@ const UsersModal = ({
   modalVisible,
   onModalVisible,
   onAssign,
+  assignments,
 }: UsersModalProps) => {
   const { data } = useVolunteers(serviceId);
   return (
@@ -49,25 +52,48 @@ const UsersModal = ({
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
               >
-                {data?.map(({ id, full_name }) => (
-                  <TouchableOpacity
-                    key={id}
-                    style={styles.option}
-                    onPress={() => onAssign(id)}
-                  >
-                    <View style={styles.userIcon}>
-                      <Ionicons
-                        name="person-outline"
-                        size={20}
-                        color={defaultStyles.primary}
-                      />
-                    </View>
+                {data?.map(({ id, full_name }) => {
+                  const currentAssignment = assignments?.find(
+                    (assignment) =>
+                      assignment.service_id === serviceId &&
+                      assignment.user_id === id,
+                  );
 
-                    <Text style={styles.optionText}>
-                      {full_name?.toUpperCase()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                  return (
+                    <TouchableOpacity
+                      key={id}
+                      style={styles.option}
+                      onPress={() => onAssign(id)}
+                    >
+                      <View style={styles.userIcon}>
+                        <Ionicons
+                          name="person-outline"
+                          size={20}
+                          color={defaultStyles.primary}
+                        />
+                      </View>
+
+                      <View style={styles.userInfo}>
+                        <Text style={styles.optionText}>
+                          {full_name?.toUpperCase()}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.assignmentHint,
+                            currentAssignment
+                              ? styles.assignedHint
+                              : styles.availableHint,
+                          ]}
+                        >
+                          {currentAssignment
+                            ? `Currently: Station ${currentAssignment.station}`
+                            : "Available for this service"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
 
               <TouchableOpacity
@@ -85,6 +111,23 @@ const UsersModal = ({
 };
 
 const styles = StyleSheet.create({
+  userInfo: {
+    flex: 1,
+  },
+
+  assignmentHint: {
+    fontSize: 14,
+    marginTop: 4,
+    fontWeight: "600",
+  },
+
+  assignedHint: {
+    color: defaultStyles.primary,
+  },
+
+  availableHint: {
+    color: "#6B7280",
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",

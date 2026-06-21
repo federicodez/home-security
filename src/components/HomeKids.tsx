@@ -223,6 +223,7 @@ export default function KidsFloorPlan({
             modalVisible={modalVisible}
             onModalVisible={onModalVisible}
             onAssign={onAssign}
+            assignments={assignments}
           />
 
           <Station

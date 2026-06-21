@@ -148,6 +148,7 @@ export default function Main({
           modalVisible={modalVisible}
           onModalVisible={onModalVisible}
           onAssign={onAssign}
+          assignments={assignments}
         />
 
         {/* Positions */}
