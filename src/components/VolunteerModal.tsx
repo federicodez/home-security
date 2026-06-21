@@ -3,8 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { Platform } from "react-native";
 import type { ProfileRow, AvailabilityField } from "@/types";
 import { AVAILABILITY_FIELDS } from "@/types";
-
-const GOLD = "#D4BE8C";
+import { defaultStyles } from "@/constants/Styles";
 
 interface VolunteerModalProps {
   modalVisible: boolean;
@@ -123,7 +122,7 @@ const styles = StyleSheet.create({
   },
 
   activeOption: {
-    backgroundColor: GOLD,
+    backgroundColor: defaultStyles.primary,
   },
 
   activeText: {
@@ -133,7 +132,7 @@ const styles = StyleSheet.create({
   },
 
   inactiveText: {
-    color: GOLD,
+    color: defaultStyles.primary,
     fontSize: 16,
     fontWeight: "800",
   },
