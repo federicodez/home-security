@@ -1,4 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { Alert } from "react-native";
 import Login from "../sign-in";
 import { supabase } from "@/utils/supabase";
 
@@ -14,7 +15,20 @@ jest.mock("@/utils/supabase", () => ({
 
 const mockSupabase = jest.mocked(supabase);
 
+const mockAuthError = (message: string) =>
+  ({
+    name: "AuthError",
+    message,
+    code: "mock_auth_error",
+    status: 400,
+    __isAuthError: true,
+    toJSON: () => ({ name: "AuthError", message, status: 400 }),
+  }) as never;
+
 describe("Login", () => {
+  const alertSpy = jest.spyOn(Alert, "alert").mockImplementation();
+  const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
   beforeEach(() => {
     jest.useFakeTimers();
     mockSupabase.auth.signInWithOtp.mockResolvedValue({
@@ -47,6 +61,7 @@ describe("Login", () => {
     jest.clearAllTimers();
     jest.useRealTimers();
     jest.clearAllMocks();
+    consoleLogSpy.mockClear();
   });
 
   it("renders the sign-in form", () => {
@@ -78,6 +93,30 @@ describe("Login", () => {
     });
 
     expect(getByText("One time code")).toBeTruthy();
+  });
+
+  it("stays on the email form when sending the code fails", async () => {
+    mockSupabase.auth.signInWithOtp.mockResolvedValue({
+      data: {
+        user: null,
+        session: null,
+      },
+      error: mockAuthError("User not found"),
+    });
+
+    const { getByText, getByPlaceholderText, queryByText } = render(<Login />);
+
+    fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
+    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
+    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
+    fireEvent.press(getByText("Send Code"));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Failed to send code");
+    });
+
+    expect(queryByText("One time code")).toBeNull();
+    expect(getByText("Send Code")).toBeTruthy();
   });
 
   it("submits the email code and creates the profile", async () => {
@@ -118,5 +157,37 @@ describe("Login", () => {
       },
       { onConflict: "id" },
     );
+  });
+
+  it("alerts when code verification fails", async () => {
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    mockSupabase.from.mockReturnValue({ upsert } as never);
+    mockSupabase.auth.verifyOtp.mockResolvedValue({
+      data: {
+        user: null,
+        session: null,
+      },
+      error: mockAuthError("Invalid code"),
+    });
+
+    const { getByText, getByPlaceholderText } = render(<Login />);
+
+    fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
+    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
+    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
+    fireEvent.press(getByText("Send Code"));
+
+    await waitFor(() => {
+      expect(getByText("One time code")).toBeTruthy();
+    });
+
+    fireEvent.changeText(getByPlaceholderText("*****"), "123456");
+    fireEvent.press(getByText("Submit"));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Failed to verify code");
+    });
+
+    expect(upsert).not.toHaveBeenCalled();
   });
 });

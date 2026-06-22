@@ -39,6 +39,7 @@ const Login = () => {
 
       if (error) throw error;
 
+      setCodeSent(true);
       setCooldown(60);
 
       const timer = setInterval(() => {
@@ -59,35 +60,38 @@ const Login = () => {
       }
 
       Alert.alert("Failed to send code");
-    } finally {
-      setCodeSent(true);
     }
   };
 
   const verifyOtp = async () => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: "email",
-    });
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "email",
+      });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const user = data.user;
+      const user = data.user;
 
-    if (!user) throw new Error("No user returned");
+      if (!user) throw new Error("No user returned");
 
-    await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        email: user.email,
-        full_name: `${name.first} ${name.last}`,
-        available_8am: false,
-        available_930am: false,
-        available_11am: false,
-      },
-      { onConflict: "id" },
-    );
+      await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          email: user.email,
+          full_name: `${name.first} ${name.last}`,
+          available_8am: false,
+          available_930am: false,
+          available_11am: false,
+        },
+        { onConflict: "id" },
+      );
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Failed to verify code");
+    }
   };
 
   return (
