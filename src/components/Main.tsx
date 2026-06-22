@@ -1,7 +1,6 @@
 import { View, Text, Image, StyleSheet } from "react-native";
 import Svg, { Rect } from "react-native-svg";
 import PositionList from "./PositionList";
-import UsersModal from "./UsersModal";
 import type { AssignmentWithRelations } from "@/types";
 
 interface MainProps {
@@ -140,15 +139,6 @@ export default function Main({
           height="10"
           stroke="rgba(212,190,143,0.9)"
           fill="none"
-        />
-
-        {/* User selection modal */}
-        <UsersModal
-          serviceId={serviceId}
-          modalVisible={modalVisible}
-          onModalVisible={onModalVisible}
-          onAssign={onAssign}
-          assignments={assignments}
         />
 
         {/* Positions */}

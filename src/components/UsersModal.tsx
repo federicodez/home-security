@@ -28,6 +28,11 @@ const UsersModal = ({
   assignments,
 }: UsersModalProps) => {
   const { data } = useVolunteers(serviceId);
+
+  if (!modalVisible) {
+    return null;
+  }
+
   return (
     <Modal
       animationType="slide"

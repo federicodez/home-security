@@ -27,48 +27,54 @@ const VolunteerDetailsModal = ({
   assignedCount,
   services,
   onClose,
-}: VolunteerDetailsModalProps) => (
-  <Modal transparent animationType="slide" visible={visible}>
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={styles.overlay}>
-        <TouchableWithoutFeedback>
-          <View style={styles.sheet}>
-            <View style={styles.handle} />
+}: VolunteerDetailsModalProps) => {
+  if (!visible) {
+    return null;
+  }
 
-            <Text style={styles.name}>{full_name}</Text>
-            <Text style={styles.summary}>
-              {assignedCount} / 3 Services Assigned
-            </Text>
+  return (
+    <Modal transparent animationType="slide" visible={visible}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={styles.sheet}>
+              <View style={styles.handle} />
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Assignments</Text>
+              <Text style={styles.name}>{full_name}</Text>
+              <Text style={styles.summary}>
+                {assignedCount} / 3 Services Assigned
+              </Text>
 
-              {services.map((service) => (
-                <View key={service.service_name} style={styles.row}>
-                  <Text style={styles.label}>{service.service_name}</Text>
-                  <Text
-                    style={[
-                      styles.value,
-                      service.station ? styles.assigned : styles.unassigned,
-                    ]}
-                  >
-                    {service.station
-                      ? `Station ${service.station}`
-                      : "Unassigned"}
-                  </Text>
-                </View>
-              ))}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Assignments</Text>
+
+                {services.map((service) => (
+                  <View key={service.service_name} style={styles.row}>
+                    <Text style={styles.label}>{service.service_name}</Text>
+                    <Text
+                      style={[
+                        styles.value,
+                        service.station ? styles.assigned : styles.unassigned,
+                      ]}
+                    >
+                      {service.station
+                        ? `Station ${service.station}`
+                        : "Unassigned"}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeText}>Close</Text>
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
-  </Modal>
-);
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
   overlay: {

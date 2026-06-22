@@ -19,7 +19,14 @@ import VolunteerDetailsModal from "@/components/VolunteerDetailsModal";
 import { defaultStyles } from "@/constants/Styles";
 
 export default function Tab() {
-  const [visible, setVisible] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<{
+    full_name: string | null;
+    assignedCount: number;
+    services: {
+      service_name: string | null;
+      station: string | null;
+    }[];
+  } | null>(null);
   const { data: user } = useProfile();
   const { data: volunteers } = useVolunteerAssignments();
   const { mutate: updateAvailability } = useUpdateAvailability();
@@ -44,7 +51,8 @@ export default function Tab() {
     (s) => s.service_name === "11am" && s.station,
   );
 
-  const handleModal = () => setVisible(!visible);
+  const closeVolunteerDetails = () => setSelectedVolunteer(null);
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen}>
@@ -74,7 +82,13 @@ export default function Tab() {
                 <Pressable
                   key={user_id}
                   style={styles.volunteerRow}
-                  onPress={handleModal}
+                  onPress={() =>
+                    setSelectedVolunteer({
+                      full_name,
+                      assignedCount,
+                      services,
+                    })
+                  }
                 >
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
@@ -99,20 +113,18 @@ export default function Tab() {
                     size={24}
                     color={defaultStyles.primary}
                   />
-                  {visible && (
-                    <VolunteerDetailsModal
-                      visible={visible}
-                      full_name={full_name}
-                      assignedCount={assignedCount}
-                      services={services}
-                      onClose={handleModal}
-                    />
-                  )}
                 </Pressable>
               );
             })}
           </View>
         </ScrollView>
+        <VolunteerDetailsModal
+          visible={!!selectedVolunteer}
+          full_name={selectedVolunteer?.full_name ?? null}
+          assignedCount={selectedVolunteer?.assignedCount ?? 0}
+          services={selectedVolunteer?.services ?? []}
+          onClose={closeVolunteerDetails}
+        />
         <Availability
           user={user}
           assigned8am={assigned8am}

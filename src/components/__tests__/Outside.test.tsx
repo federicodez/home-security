@@ -3,18 +3,6 @@ import { render } from "@testing-library/react-native";
 import Outside from "../Outside";
 import { makeAssignment } from "../__fixtures__/fixtures";
 
-jest.mock("../UsersModal", () => {
-  const React = require("react");
-  const { Text } = require("react-native");
-
-  function MockUsersModal({ serviceId }: { serviceId: string }) {
-    return React.createElement(Text, null, `users-${serviceId}`);
-  }
-
-  MockUsersModal.displayName = "MockUsersModal";
-  return MockUsersModal;
-});
-
 jest.mock("../Station", () => {
   const React = require("react");
   const { Text } = require("react-native");
@@ -65,7 +53,6 @@ describe("Outside", () => {
     expect(getByText("8am Service")).toBeTruthy();
     expect(getByText("station-O1")).toBeTruthy();
     expect(getByText("station-O2")).toBeTruthy();
-    expect(getByText("users-service-1")).toBeTruthy();
   });
 
   it("renders nothing when there are no outside assignments", () => {

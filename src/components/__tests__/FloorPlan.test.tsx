@@ -106,6 +106,18 @@ jest.mock("../PaginationDots", () => {
   return MockPaginationDots;
 });
 
+jest.mock("../UsersModal", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+
+  function MockUsersModal({ serviceId }: { serviceId: string }) {
+    return React.createElement(Text, null, `users-${serviceId}`);
+  }
+
+  MockUsersModal.displayName = "MockUsersModal";
+  return MockUsersModal;
+});
+
 const mockUseAssignmentList = jest.mocked(useAssignmentList);
 const mockUseUpdateAssignment = jest.mocked(useUpdateAssignment);
 
@@ -131,6 +143,7 @@ describe("FloorPlan", () => {
     expect(getByText("main-floor")).toBeTruthy();
     expect(getByText("outside-floor")).toBeTruthy();
     expect(getByText("kids-floor")).toBeTruthy();
+    expect(getByText("users-service-1")).toBeTruthy();
     expect(mockMain).toHaveBeenCalledWith(
       expect.objectContaining({
         serviceId: "service-1",

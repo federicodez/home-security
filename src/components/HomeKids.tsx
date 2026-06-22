@@ -8,7 +8,6 @@ import Svg, {
 } from "react-native-svg";
 import { StyleSheet, View, Text } from "react-native";
 import { defaultStyles } from "@/constants/Styles";
-import UsersModal from "./UsersModal";
 import Station from "./Station";
 import Door from "./Door";
 import type { AssignmentWithRelations } from "@/types";
@@ -215,15 +214,6 @@ export default function KidsFloorPlan({
             height={55}
             direction="right"
             label="Bottom Stairs"
-          />
-
-          {/* User selection modal */}
-          <UsersModal
-            serviceId={serviceId}
-            modalVisible={modalVisible}
-            onModalVisible={onModalVisible}
-            onAssign={onAssign}
-            assignments={assignments}
           />
 
           <Station

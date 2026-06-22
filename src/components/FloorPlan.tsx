@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import PagerView from "react-native-pager-view";
 
 import { useUpdateAssignment, useAssignmentList } from "@/api/assignments";
@@ -7,6 +7,7 @@ import Main from "./Main";
 import Outside from "./Outside";
 import HomeKids from "./HomeKids";
 import PaginationDots from "./PaginationDots";
+import UsersModal from "./UsersModal";
 
 interface FloorPlanProps {
   serviceId: string;
@@ -36,7 +37,7 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
     updatePosition({ serviceId, station: position, profileId: null });
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <PagerView
         ref={pagerRef}
         style={{ flex: 1 }}
@@ -90,6 +91,20 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
           pagerRef.current?.setPage(index);
         }}
       />
+      <UsersModal
+        serviceId={serviceId}
+        modalVisible={modalVisible}
+        onModalVisible={setModalVisible}
+        onAssign={handleAssign}
+        assignments={assignments}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: "100%",
+  },
+});

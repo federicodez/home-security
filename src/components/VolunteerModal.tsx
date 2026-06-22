@@ -25,6 +25,10 @@ export default function VolunteerModal({
   onHandleChange,
   user,
 }: VolunteerModalProps) {
+  if (!modalVisible) {
+    return null;
+  }
+
   return (
     <Modal
       animationType="fade"

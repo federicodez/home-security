@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
 import Svg, { Line, Path, Rect, Text as SVGText } from "react-native-svg";
-import UsersModal from "./UsersModal";
 import Station from "./Station";
 import Door from "./Door";
 import type { AssignmentWithRelations } from "@/types";
@@ -234,15 +233,6 @@ export default function Outside({
           >
             Area
           </SVGText>
-
-          {/* User selection modal */}
-          <UsersModal
-            serviceId={serviceId}
-            modalVisible={modalVisible}
-            onModalVisible={onModalVisible}
-            onAssign={onAssign}
-            assignments={assignments}
-          />
 
           <Station
             assignment={outsideAssignments[0]}

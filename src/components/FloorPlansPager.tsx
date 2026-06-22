@@ -1,14 +1,6 @@
-import { Dimensions, FlatList, View, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import FloorPlan from "./FloorPlan";
-
-const { width } = Dimensions.get("window");
-
-const floorPlans = [
-  { id: "main", title: "Main Sanctuary" },
-  { id: "outside", title: "Outside" },
-  { id: "kids", title: "Kids" },
-];
 
 interface FloorPlansPagerProps {
   service: {
@@ -23,18 +15,7 @@ export default function FloorPlansPager({
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.centeredView}>
-        <FlatList
-          data={floorPlans}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          renderItem={() => (
-            <View style={{ width, flex: 1, backgroundColor: "black" }}>
-              <FloorPlan serviceId={id} serviceTime={name} />
-            </View>
-          )}
-        />
+        <FloorPlan serviceId={id} serviceTime={name} />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -43,8 +24,8 @@ export default function FloorPlansPager({
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
+    width: "100%",
     backgroundColor: "#000",
     justifyContent: "center",
-    alignItems: "center",
   },
 });

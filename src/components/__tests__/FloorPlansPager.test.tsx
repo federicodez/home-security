@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { render } from "@testing-library/react-native";
-import { FlatList } from "react-native";
 import FloorPlansPager from "../FloorPlansPager";
 
 jest.mock("../FloorPlan", () => {
@@ -22,24 +21,11 @@ jest.mock("../FloorPlan", () => {
 });
 
 describe("FloorPlansPager", () => {
-  it("configures a horizontal pager list for the floor plans", () => {
-    const { UNSAFE_getByType } = render(
+  it("renders one floor plan pager with the selected service", () => {
+    const { getByText } = render(
       <FloorPlansPager service={{ id: "service-1", name: "8am" }} />,
     );
 
-    const list = UNSAFE_getByType(FlatList);
-
-    expect(list.props.horizontal).toBe(true);
-    expect(list.props.pagingEnabled).toBe(true);
-    expect(list.props.data).toHaveLength(3);
-    expect(list.props.keyExtractor({ id: "main" })).toBe("main");
-  });
-
-  it("renders floor plan pages with the selected service", () => {
-    const { getAllByText } = render(
-      <FloorPlansPager service={{ id: "service-1", name: "8am" }} />,
-    );
-
-    expect(getAllByText("service-1:8am")).toHaveLength(3);
+    expect(getByText("service-1:8am")).toBeTruthy();
   });
 });
