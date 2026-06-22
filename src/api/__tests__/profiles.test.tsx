@@ -2,6 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react-native";
 import {
   fetchVolunteerAssignments,
   useProfile,
+  useUpdateProfile,
   useUpdateAvailability,
   useVolunteerAssignments,
   useVolunteers,
@@ -68,22 +69,14 @@ describe("profiles api", () => {
     });
   });
 
-  it("creates a profile when the signed-in user has none", async () => {
-    const single = jest.fn().mockResolvedValue({
-      data: { id: "profile-1", full_name: "Ada Lovelace" },
-      error: null,
-    });
-    const insertSelect = jest.fn(() => ({ single }));
-    const upsert = jest.fn(() => ({ select: insertSelect }));
+  it("returns null when the signed-in user has no approved profile", async () => {
     const maybeSingle = jest.fn().mockResolvedValue({
       data: null,
       error: null,
     });
     const eq = jest.fn(() => ({ maybeSingle }));
     const select = jest.fn(() => ({ eq }));
-    mockSupabase.from
-      .mockReturnValueOnce({ select } as never)
-      .mockReturnValueOnce({ upsert } as never);
+    mockSupabase.from.mockReturnValue({ select } as never);
 
     const { result } = renderHook(() => useProfile(), {
       wrapper: createQueryWrapper(),
@@ -91,19 +84,7 @@ describe("profiles api", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(upsert).toHaveBeenCalledWith(
-      {
-        id: "profile-1",
-        email: "ada@example.com",
-        full_name: "Ada Lovelace",
-        avatar_url: "https://example.com/avatar.png",
-      },
-      { onConflict: "id" },
-    );
-    expect(result.current.data).toEqual({
-      id: "profile-1",
-      full_name: "Ada Lovelace",
-    });
+    expect(result.current.data).toBeNull();
   });
 
   it("fetches volunteer assignments from the rpc", async () => {
@@ -203,5 +184,37 @@ describe("profiles api", () => {
       queryKey: ["volunteers"],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
+  });
+
+  it("updates the current user's profile name and invalidates roster queries", async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: {
+        user: { id: "profile-1" },
+      },
+    } as never);
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn(() => ({ eq }));
+    mockSupabase.from.mockReturnValue({ update } as never);
+
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = jest.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdateProfile(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    result.current.mutate({ full_name: "  Grace Hopper  " });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(update).toHaveBeenCalledWith({ full_name: "Grace Hopper" });
+    expect(eq).toHaveBeenCalledWith("id", "profile-1");
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteer-assignments"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteers"],
+    });
   });
 });

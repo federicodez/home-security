@@ -40,6 +40,7 @@ Workflow: `.github/workflows/ci.yml`
 
 ## QA And Security
 
+- Admin provisioning: [docs/admin-provisioning.md](docs/admin-provisioning.md)
 - Manual QA checklist: [docs/manual-qa-checklist.md](docs/manual-qa-checklist.md)
 - E2E test plan: [docs/e2e-plan.md](docs/e2e-plan.md)
 - Supabase RLS audit: [docs/supabase-rls-audit.md](docs/supabase-rls-audit.md)

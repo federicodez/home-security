@@ -25,9 +25,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: { session },
         } = await supabase.auth.getSession();
 
+        if (!session) {
+          setSession(null);
+          return;
+        }
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          await supabase.auth.signOut();
+          queryClient.clear();
+          setSession(null);
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileError || !profile) {
+          await supabase.auth.signOut();
+          queryClient.clear();
+          setSession(null);
+          return;
+        }
+
         setSession(session);
       } catch (e) {
         console.error("Auth init error:", e);
+        await supabase.auth.signOut();
+        queryClient.clear();
         setSession(null);
       } finally {
         setLoading(false);

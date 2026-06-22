@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   StyleSheet,
@@ -7,11 +7,13 @@ import {
   Text,
   ScrollView,
   Image,
+  TextInput,
 } from "react-native";
 import {
   useVolunteerAssignments,
   useProfile,
   useUpdateAvailability,
+  useUpdateProfile,
 } from "@/api/profiles";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import Availability from "@/components/Availability";
@@ -27,9 +29,19 @@ export default function Tab() {
       station: string | null;
     }[];
   } | null>(null);
+  const [fullName, setFullName] = useState("");
   const { data: user } = useProfile();
   const { data: volunteers } = useVolunteerAssignments();
   const { mutate: updateAvailability } = useUpdateAvailability();
+  const { mutate: updateProfile, isPending: isUpdatingProfile } =
+    useUpdateProfile();
+
+  useEffect(() => {
+    setFullName(user?.full_name ?? "");
+  }, [user?.full_name]);
+
+  const trimmedFullName = fullName.trim();
+  const profileNameChanged = trimmedFullName !== (user?.full_name ?? "");
 
   const availableCount = [
     user?.available_8am,
@@ -68,6 +80,43 @@ export default function Tab() {
             <Text style={styles.subtitle}>Service assignments</Text>
           </View>
 
+          {!user?.full_name ? (
+            <View style={styles.profileCard}>
+              <View style={styles.volunteersHeader}>
+                <Text style={styles.sectionTitle}>Your Profile</Text>
+                <Text style={styles.helperText}>Display name</Text>
+              </View>
+
+              <TextInput
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="Your full name"
+                style={styles.profileInput}
+                autoCapitalize="words"
+                autoComplete="name"
+                textContentType="name"
+                placeholderTextColor="#6B7280"
+              />
+
+              <Pressable
+                style={[
+                  styles.saveButton,
+                  (!profileNameChanged ||
+                    !trimmedFullName ||
+                    isUpdatingProfile) &&
+                    styles.disabledButton,
+                ]}
+                disabled={
+                  !profileNameChanged || !trimmedFullName || isUpdatingProfile
+                }
+                onPress={() => updateProfile({ full_name: trimmedFullName })}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isUpdatingProfile ? "Saving..." : "Save Name"}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
           <View style={styles.volunteersCard}>
             <View style={styles.volunteersHeader}>
               <Text style={styles.sectionTitle}>Volunteers</Text>
@@ -227,6 +276,43 @@ const styles = StyleSheet.create({
     borderColor: "rgba(212,190,143,0.4)",
     padding: 18,
     marginBottom: 18,
+  },
+
+  profileCard: {
+    backgroundColor: "#111111",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(212,190,143,0.4)",
+    padding: 18,
+    marginBottom: 18,
+  },
+
+  profileInput: {
+    height: 52,
+    backgroundColor: "#FFF",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 14,
+    fontSize: 16,
+  },
+
+  saveButton: {
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: defaultStyles.primary,
+  },
+
+  disabledButton: {
+    opacity: 0.45,
+  },
+
+  saveButtonText: {
+    color: defaultStyles.secondary,
+    fontSize: 16,
+    fontWeight: "800",
   },
 
   volunteersHeader: {

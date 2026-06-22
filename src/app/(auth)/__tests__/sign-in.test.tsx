@@ -70,8 +70,6 @@ describe("Login", () => {
     expect(getByText("HOME CHURCH")).toBeTruthy();
     expect(getByText("Security Team")).toBeTruthy();
     expect(getByPlaceholderText("jon@gmail.com")).toBeTruthy();
-    expect(getByPlaceholderText("jon")).toBeTruthy();
-    expect(getByPlaceholderText("Snow")).toBeTruthy();
     expect(getByText("Send Code")).toBeTruthy();
   });
 
@@ -82,8 +80,6 @@ describe("Login", () => {
       getByPlaceholderText("jon@gmail.com"),
       "  ADA@EXAMPLE.COM  ",
     );
-    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
-    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {
@@ -110,8 +106,6 @@ describe("Login", () => {
     const { getByText, getByPlaceholderText, queryByText } = render(<Login />);
 
     fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
-    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
-    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {
@@ -137,8 +131,6 @@ describe("Login", () => {
     const { getByText, getByPlaceholderText } = render(<Login />);
 
     fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
-    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
-    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {
@@ -162,18 +154,13 @@ describe("Login", () => {
     });
   });
 
-  it("submits the email code and creates the profile", async () => {
-    const upsert = jest.fn().mockResolvedValue({ error: null });
-    mockSupabase.from.mockReturnValue({ upsert } as never);
-
+  it("submits the email code without creating or updating the profile", async () => {
     const { getByText, getByPlaceholderText } = render(<Login />);
 
     fireEvent.changeText(
       getByPlaceholderText("jon@gmail.com"),
       "  ADA@EXAMPLE.COM  ",
     );
-    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
-    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {
@@ -191,26 +178,13 @@ describe("Login", () => {
       });
     });
 
-    expect(mockSupabase.from).toHaveBeenCalledWith("profiles");
-    expect(upsert).toHaveBeenCalledWith(
-      {
-        id: "user-1",
-        email: "ada@example.com",
-        full_name: "Ada Lovelace",
-        available_8am: false,
-        available_930am: false,
-        available_11am: false,
-      },
-      { onConflict: "id" },
-    );
+    expect(mockSupabase.from).not.toHaveBeenCalled();
   });
 
   it("does not submit until the code has eight digits", async () => {
     const { getByText, getByPlaceholderText } = render(<Login />);
 
     fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
-    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
-    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {
@@ -237,8 +211,6 @@ describe("Login", () => {
     const { getByText, getByPlaceholderText } = render(<Login />);
 
     fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
-    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
-    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {

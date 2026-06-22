@@ -19,10 +19,6 @@ const OTP_LENGTH = 8;
 
 const Login = () => {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState({
-    first: "",
-    last: "",
-  });
   const [token, setToken] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
@@ -90,18 +86,6 @@ const Login = () => {
       const user = data.user;
 
       if (!user) throw new Error("No user returned");
-
-      await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          email: user.email,
-          full_name: `${name.first} ${name.last}`,
-          available_8am: false,
-          available_930am: false,
-          available_11am: false,
-        },
-        { onConflict: "id" },
-      );
     } catch (error) {
       console.log(error);
       Alert.alert("Failed to verify code");
@@ -145,28 +129,6 @@ const Login = () => {
               textContentType="emailAddress"
             />
 
-            <Text style={styles.label}>First Name</Text>
-            <TextInput
-              value={name.first}
-              onChangeText={(v) => setName((prev) => ({ ...prev, first: v }))}
-              placeholder="jon"
-              style={styles.input}
-              autoCapitalize="none"
-              autoComplete="given-name"
-              textContentType="givenName"
-            />
-
-            <Text style={styles.label}>Last Name</Text>
-            <TextInput
-              value={name.last}
-              onChangeText={(v) => setName((prev) => ({ ...prev, last: v }))}
-              placeholder="Snow"
-              style={styles.input}
-              autoCapitalize="none"
-              autoComplete="family-name"
-              textContentType="familyName"
-            />
-
             {codeSent ? (
               <>
                 <Text style={styles.label}>One time code</Text>
@@ -199,8 +161,6 @@ const Login = () => {
                 disabled={
                   isSendingCode ||
                   cooldown > 0 ||
-                  !name.first.length ||
-                  !name.last.length ||
                   !normalizedEmail.length
                 }
               />

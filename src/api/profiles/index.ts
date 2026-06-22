@@ -3,6 +3,10 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
 import type { VolunteerWithAssignments, AvailabilityUpdate } from "@/types";
 
+type ProfileUpdate = {
+  full_name: string;
+};
+
 export type VolunteerService = {
   service_id: string;
   service_name: string;
@@ -32,33 +36,6 @@ export const useProfile = () => {
         .maybeSingle();
 
       if (error) throw error;
-
-      // create profile if missing
-      if (!data) {
-        const { data: newProfile, error: insertError } = await supabase
-          .from("profiles")
-          .upsert(
-            {
-              id: user.id,
-              email: user.email,
-              full_name:
-                user.user_metadata?.full_name ??
-                user.user_metadata?.name ??
-                null,
-              avatar_url:
-                user.user_metadata?.avatar_url ??
-                user.user_metadata?.picture ??
-                null,
-            },
-            { onConflict: "id" },
-          )
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-
-        return newProfile;
-      }
 
       return data;
     },
@@ -128,6 +105,57 @@ export const useVolunteers = (serviceId: string) => {
     },
   });
 };
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (values: ProfileUpdate) => {
+      const fullName = values.full_name.trim();
+
+      if (!fullName) {
+        throw new Error("Full name is required");
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("No user");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", user.id);
+
+      if (error) throw error;
+    },
+
+    onMutate: async (values) => {
+      await queryClient.cancelQueries({ queryKey: ["profile"] });
+
+      const previousProfile = queryClient.getQueryData(["profile"]);
+      const fullName = values.full_name.trim();
+
+      queryClient.setQueryData(["profile"], (old: any) => ({
+        ...old,
+        full_name: fullName,
+      }));
+
+      return { previousProfile };
+    },
+
+    onError: (_error, _values, context) => {
+      queryClient.setQueryData(["profile"], context?.previousProfile);
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
+    },
+  });
+}
 
 export function useUpdateAvailability() {
   const queryClient = useQueryClient();
