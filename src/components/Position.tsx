@@ -23,190 +23,14 @@ const Position = ({
   onPosition,
   onClear,
 }: PositionProps) => {
-  if (user) {
-    const name = getInitials(user.full_name?.toUpperCase());
-    switch (station) {
-      case "G":
-        return (
-          <G
-            onPress={() => {
-              onModalVisible(!modalVisible);
-              onPosition(station);
-            }}
-            onLongPress={onClear}
-          >
-            {/* invisible hit target */}
-            <Circle cx={x} cy={y} r={32} fill="transparent" />
-            {/* outer station circle */}
-            <Circle
-              cx={x}
-              cy={y}
-              r={18}
-              fill="#22C55E"
-              stroke="white"
-              strokeWidth={2}
-            />
-            {/* station letter */}
-            <Text
-              x={x}
-              y={y}
-              textAnchor="middle"
-              alignmentBaseline="middle"
-              fontSize="12"
-              fontWeight="bold"
-              fill="black"
-            >
-              {station}
-            </Text>
-            <Text
-              x={x}
-              y={y - 30}
-              textAnchor="middle"
-              fill="white"
-              fontSize="18"
-              fontWeight="bold"
-            >
-              {name}
-            </Text>
-          </G>
-        );
-      case "H":
-        return (
-          <G
-            onPress={() => {
-              onModalVisible(!modalVisible);
-              onPosition(station);
-            }}
-            onLongPress={onClear}
-          >
-            {/* station letter */}
-            <Text
-              x={x}
-              y={y}
-              textAnchor="middle"
-              alignmentBaseline="middle"
-              fontSize="12"
-              fontWeight="bold"
-              fill="black"
-            >
-              {/* invisible hit target */}
-              <Circle cx={x} cy={y} r={40} fill="transparent" />
-              {/* outer station circle */}
-              <Circle
-                cx={x}
-                cy={y}
-                r={18}
-                fill="#22C55E"
-                stroke="white"
-                strokeWidth={2}
-              />
-              {station}
-            </Text>
-            <Text
-              x={x}
-              y={y - 30}
-              textAnchor="middle"
-              fill="white"
-              fontSize="18"
-              fontWeight="bold"
-            >
-              <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
-              {name}
-            </Text>
-          </G>
-        );
-      case "E":
-        return (
-          <G
-            onPress={() => {
-              onModalVisible(!modalVisible);
-              onPosition(station);
-            }}
-            onLongPress={onClear}
-          >
-            {/* station letter */}
-            <Text
-              x={x}
-              y={y}
-              textAnchor="middle"
-              alignmentBaseline="middle"
-              fontSize="12"
-              fontWeight="bold"
-              fill="black"
-            >
-              {/* invisible hit target */}
-              <Circle cx={x} cy={y} r={32} fill="transparent" />
-              {/* outer station circle */}
-              <Circle
-                cx={x}
-                cy={y}
-                r={18}
-                fill="#22C55E"
-                stroke="white"
-                strokeWidth={2}
-              />
-              {station}
-            </Text>
-            <Text
-              x={x}
-              y={y - 30}
-              textAnchor="middle"
-              fill="white"
-              fontSize="18"
-              fontWeight="bold"
-            >
-              <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
-              {name}
-            </Text>
-          </G>
-        );
-      default:
-        return (
-          <G
-            onPress={() => {
-              onModalVisible(!modalVisible);
-              onPosition(station);
-            }}
-            onLongPress={onClear}
-          >
-            {/* station letter */}
-            <Text
-              x={x}
-              y={y}
-              textAnchor="middle"
-              alignmentBaseline="middle"
-              fontSize="12"
-              fontWeight="bold"
-              fill="black"
-            >
-              {/* invisible hit target */}
-              <Circle cx={x} cy={y} r={32} fill="transparent" />
-              {/* outer station circle */}
-              <Circle
-                cx={x}
-                cy={y}
-                r={18}
-                fill="#22C55E"
-                stroke="white"
-                strokeWidth={2}
-              />
-              {station}
-            </Text>
-            <Text
-              x={x}
-              y={y - 30}
-              textAnchor="middle"
-              fill="white"
-              fontSize="18"
-              fontWeight="bold"
-            >
-              <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
-              {name}
-            </Text>
-          </G>
-        );
-    }
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return null;
   }
+
+  const assigned = !!user;
+  const initials = user ? getInitials(user.full_name?.toUpperCase()) : null;
+  const hitRadius = assigned && station === "H" ? 40 : 32;
+  const showNameBadge = assigned && station !== "G";
 
   return (
     <G
@@ -217,13 +41,13 @@ const Position = ({
       onLongPress={onClear}
     >
       {/* invisible hit target */}
-      <Circle cx={x} cy={y} r={32} fill="transparent" />
+      <Circle cx={x} cy={y} r={hitRadius} fill="transparent" />
       {/* outer station circle */}
       <Circle
         cx={x}
         cy={y}
         r={18}
-        fill="#374151"
+        fill={assigned ? "#22C55E" : "#374151"}
         stroke="white"
         strokeWidth={2}
       />
@@ -236,10 +60,27 @@ const Position = ({
         alignmentBaseline="middle"
         fontSize="12"
         fontWeight="bold"
-        fill="white"
+        fill={assigned ? "black" : "white"}
       >
         {station}
       </Text>
+
+      {showNameBadge && (
+        <Circle cx={x} cy={y - 35} fill="black" r={15} opacity={0.9} />
+      )}
+
+      {initials && (
+        <Text
+          x={x}
+          y={y - 30}
+          textAnchor="middle"
+          fill="white"
+          fontSize="18"
+          fontWeight="bold"
+        >
+          {initials}
+        </Text>
+      )}
     </G>
   );
 };

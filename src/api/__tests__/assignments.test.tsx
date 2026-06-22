@@ -52,6 +52,34 @@ describe("assignments api", () => {
     expect(result.current.data).toEqual([{ id: "assignment-1", station: "A" }]);
   });
 
+  it("normalizes Supabase relation arrays into single relation objects", async () => {
+    mockAssignmentQuery({
+      data: [
+        {
+          id: "assignment-1",
+          station: "A",
+          service: [{ id: "service-1", name: "8am" }],
+          profile: [{ id: "profile-1", full_name: "Ada Lovelace" }],
+          position: [{ station: "A", x: 100, y: 200 }],
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useAssignmentList("service-1"), {
+      wrapper: createQueryWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.[0]).toEqual(
+      expect.objectContaining({
+        service: { id: "service-1", name: "8am" },
+        profile: { id: "profile-1", full_name: "Ada Lovelace" },
+        position: { station: "A", x: 100, y: 200 },
+      }),
+    );
+  });
+
   it("surfaces assignment list errors", async () => {
     mockAssignmentQuery({
       data: null,

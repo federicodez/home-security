@@ -101,7 +101,10 @@ const Login = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
@@ -121,6 +124,9 @@ const Login = () => {
               placeholder="jon@gmail.com"
               style={styles.input}
               autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              textContentType="emailAddress"
             />
 
             <Text style={styles.label}>First Name</Text>
@@ -130,6 +136,8 @@ const Login = () => {
               placeholder="jon"
               style={styles.input}
               autoCapitalize="none"
+              autoComplete="given-name"
+              textContentType="givenName"
             />
 
             <Text style={styles.label}>Last Name</Text>
@@ -139,6 +147,8 @@ const Login = () => {
               placeholder="Snow"
               style={styles.input}
               autoCapitalize="none"
+              autoComplete="family-name"
+              textContentType="familyName"
             />
 
             {codeSent ? (
@@ -204,6 +214,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 1,
     color: "#8A8A8A",
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 48,
   },
 
   formContainer: {

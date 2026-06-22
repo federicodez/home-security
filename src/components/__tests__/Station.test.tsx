@@ -46,4 +46,22 @@ describe("Station", () => {
 
     expect(UNSAFE_getAllByType(Circle)[1].props.fill).toBe("#1F2937");
   });
+
+  it("does not render when position coordinates are invalid", () => {
+    const { toJSON } = render(
+      <Station
+        serviceId="service-1"
+        assignment={makeAssignment({
+          position: { station: "A", x: Number.NaN, y: 200 } as never,
+        })}
+        modalVisible={false}
+        onModalVisible={jest.fn()}
+        onAssign={jest.fn()}
+        onClear={jest.fn()}
+        onPosition={jest.fn()}
+      />,
+    );
+
+    expect(toJSON()).toBeNull();
+  });
 });

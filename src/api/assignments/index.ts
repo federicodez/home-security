@@ -2,6 +2,10 @@ import { supabase } from "@/utils/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { AssignmentWithRelations } from "@/types";
 
+function firstRelation<T>(relation: T | T[] | null): T | null {
+  return Array.isArray(relation) ? (relation[0] ?? null) : relation;
+}
+
 export const useAssignmentList = (serviceId?: string) => {
   return useQuery({
     queryKey: ["assignments", serviceId],
@@ -47,7 +51,12 @@ export const useAssignmentList = (serviceId?: string) => {
 
       if (error) throw new Error(error.message);
 
-      return data as unknown as AssignmentWithRelations[];
+      return (data ?? []).map((assignment) => ({
+        ...assignment,
+        service: firstRelation(assignment.service),
+        profile: firstRelation(assignment.profile),
+        position: firstRelation(assignment.position),
+      })) as unknown as AssignmentWithRelations[];
     },
 
     staleTime: 0,
