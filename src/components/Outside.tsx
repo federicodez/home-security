@@ -32,8 +32,7 @@ export default function Outside({
       id === serviceId && ["O1", "O2"].includes(station),
   );
 
-  return (
-    outsideAssignments?.length && (
+  return outsideAssignments?.length ? (
       <View style={styles.screen}>
         <View style={styles.header}>
           <Text style={styles.title}>Outside Grounds</Text>
@@ -365,8 +364,7 @@ export default function Outside({
           <Door x={150} y={415} direction="left" />
         </Svg>
       </View>
-    )
-  );
+  ) : null;
 }
 
 const styles = StyleSheet.create({

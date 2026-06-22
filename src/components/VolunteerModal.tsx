@@ -1,6 +1,13 @@
-import { Modal, StyleSheet, Switch, View, Text, Pressable } from "react-native";
+import {
+  Modal,
+  StyleSheet,
+  Switch,
+  View,
+  Text,
+  Pressable,
+  Platform,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { Platform } from "react-native";
 import type { ProfileRow, AvailabilityField } from "@/types";
 import { AVAILABILITY_FIELDS } from "@/types";
 import { defaultStyles } from "@/constants/Styles";
@@ -83,14 +90,14 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: "86%",
     backgroundColor: "#0A0A0A",
-    borderColor: GOLD,
+    borderColor: defaultStyles.primary,
     borderWidth: 1,
     borderRadius: 24,
     padding: 22,
   },
 
   title: {
-    color: GOLD,
+    color: defaultStyles.primary,
     fontSize: 28,
     fontWeight: "800",
     textAlign: "center",

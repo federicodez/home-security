@@ -16,6 +16,8 @@ const Button = forwardRef<View | null, ButtonProps>(
   },
 );
 
+Button.displayName = "Button";
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: defaultStyles.primary,

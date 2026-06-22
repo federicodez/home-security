@@ -23,6 +23,8 @@ export default function PaginationDots({
       {Array.from({ length: total }).map((_, index) => (
         <Pressable
           key={index}
+          accessibilityLabel={`Go to floor plan ${index + 1}`}
+          accessibilityRole="button"
           onPress={() => onDotPress(index)}
           style={{
             width: 12,

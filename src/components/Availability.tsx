@@ -1,6 +1,6 @@
 import { Switch, View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { ProfileRow } from "@/types";
+import type { ProfileRow, AvailabilityUpdate } from "@/types";
 import { defaultStyles } from "@/constants/Styles";
 
 interface AvailabilityProps {
@@ -9,7 +9,7 @@ interface AvailabilityProps {
   assigned930am?: boolean;
   assigned11am?: boolean;
   availableCount: number;
-  onUpdateAvailability: ({}: Record<string, boolean>) => void;
+  onUpdateAvailability: (values: AvailabilityUpdate) => void;
 }
 
 const Availability = ({
