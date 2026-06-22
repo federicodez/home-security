@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/utils/supabase";
 import { defaultStyles } from "@/constants/Styles";
 
+const OTP_LENGTH = 8;
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState({
@@ -23,15 +25,21 @@ const Login = () => {
   });
   const [token, setToken] = useState("");
   const [codeSent, setCodeSent] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   const [cooldown, setCooldown] = useState(0);
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedToken = token.trim();
 
   const sendOtp = async () => {
-    if (cooldown > 0) return;
+    if (cooldown > 0 || isSendingCode) return;
 
     try {
+      setIsSendingCode(true);
+
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: normalizedEmail,
         options: {
           shouldCreateUser: false, // important for approved users only
         },
@@ -60,14 +68,20 @@ const Login = () => {
       }
 
       Alert.alert("Failed to send code");
+    } finally {
+      setIsSendingCode(false);
     }
   };
 
   const verifyOtp = async () => {
+    if (isVerifyingCode || normalizedToken.length < OTP_LENGTH) return;
+
     try {
+      setIsVerifyingCode(true);
+
       const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
+        email: normalizedEmail,
+        token: normalizedToken,
         type: "email",
       });
 
@@ -91,6 +105,8 @@ const Login = () => {
     } catch (error) {
       console.log(error);
       Alert.alert("Failed to verify code");
+    } finally {
+      setIsVerifyingCode(false);
     }
   };
 
@@ -158,21 +174,34 @@ const Login = () => {
                   keyboardType="numeric"
                   value={token}
                   onChangeText={setToken}
-                  placeholder="*****"
+                  placeholder="12345678"
                   style={styles.input}
                   secureTextEntry
                 />
-                <Button text="Submit" onPress={verifyOtp} />
+                <Button
+                  text={isVerifyingCode ? "Verifying..." : "Submit"}
+                  onPress={verifyOtp}
+                  disabled={
+                    isVerifyingCode || normalizedToken.length < OTP_LENGTH
+                  }
+                />
               </>
             ) : (
               <Button
-                text={cooldown > 0 ? `Resend in ${cooldown}s` : "Send Code"}
+                text={
+                  isSendingCode
+                    ? "Sending..."
+                    : cooldown > 0
+                      ? `Resend in ${cooldown}s`
+                      : "Send Code"
+                }
                 onPress={sendOtp}
                 disabled={
+                  isSendingCode ||
                   cooldown > 0 ||
                   !name.first.length ||
                   !name.last.length ||
-                  !email.length
+                  !normalizedEmail.length
                 }
               />
             )}

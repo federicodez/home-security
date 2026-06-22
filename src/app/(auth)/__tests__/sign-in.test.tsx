@@ -78,7 +78,10 @@ describe("Login", () => {
   it("requests an email code after the required fields are filled", async () => {
     const { getByText, getByPlaceholderText } = render(<Login />);
 
-    fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
+    fireEvent.changeText(
+      getByPlaceholderText("jon@gmail.com"),
+      "  ADA@EXAMPLE.COM  ",
+    );
     fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
     fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
     fireEvent.press(getByText("Send Code"));
@@ -119,9 +122,17 @@ describe("Login", () => {
     expect(getByText("Send Code")).toBeTruthy();
   });
 
-  it("submits the email code and creates the profile", async () => {
-    const upsert = jest.fn().mockResolvedValue({ error: null });
-    mockSupabase.from.mockReturnValue({ upsert } as never);
+  it("prevents repeated send taps while the OTP request is in flight", async () => {
+    let resolveOtp: (value: {
+      data: { user: null; session: null };
+      error: null;
+    }) => void;
+
+    mockSupabase.auth.signInWithOtp.mockReturnValue(
+      new Promise((resolve) => {
+        resolveOtp = resolve;
+      }) as ReturnType<typeof mockSupabase.auth.signInWithOtp>,
+    );
 
     const { getByText, getByPlaceholderText } = render(<Login />);
 
@@ -131,16 +142,51 @@ describe("Login", () => {
     fireEvent.press(getByText("Send Code"));
 
     await waitFor(() => {
+      expect(getByText("Sending...")).toBeTruthy();
+    });
+
+    fireEvent.press(getByText("Sending..."));
+
+    expect(mockSupabase.auth.signInWithOtp).toHaveBeenCalledTimes(1);
+
+    resolveOtp!({
+      data: {
+        user: null,
+        session: null,
+      },
+      error: null,
+    });
+
+    await waitFor(() => {
+      expect(getByText("One time code")).toBeTruthy();
+    });
+  });
+
+  it("submits the email code and creates the profile", async () => {
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    mockSupabase.from.mockReturnValue({ upsert } as never);
+
+    const { getByText, getByPlaceholderText } = render(<Login />);
+
+    fireEvent.changeText(
+      getByPlaceholderText("jon@gmail.com"),
+      "  ADA@EXAMPLE.COM  ",
+    );
+    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
+    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
+    fireEvent.press(getByText("Send Code"));
+
+    await waitFor(() => {
       expect(getByText("One time code")).toBeTruthy();
     });
 
-    fireEvent.changeText(getByPlaceholderText("*****"), "123456");
+    fireEvent.changeText(getByPlaceholderText("12345678"), "12345678");
     fireEvent.press(getByText("Submit"));
 
     await waitFor(() => {
       expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
         email: "ada@example.com",
-        token: "123456",
+        token: "12345678",
         type: "email",
       });
     });
@@ -157,6 +203,24 @@ describe("Login", () => {
       },
       { onConflict: "id" },
     );
+  });
+
+  it("does not submit until the code has eight digits", async () => {
+    const { getByText, getByPlaceholderText } = render(<Login />);
+
+    fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
+    fireEvent.changeText(getByPlaceholderText("jon"), "Ada");
+    fireEvent.changeText(getByPlaceholderText("Snow"), "Lovelace");
+    fireEvent.press(getByText("Send Code"));
+
+    await waitFor(() => {
+      expect(getByText("One time code")).toBeTruthy();
+    });
+
+    fireEvent.changeText(getByPlaceholderText("12345678"), "1234567");
+    fireEvent.press(getByText("Submit"));
+
+    expect(mockSupabase.auth.verifyOtp).not.toHaveBeenCalled();
   });
 
   it("alerts when code verification fails", async () => {
@@ -181,7 +245,7 @@ describe("Login", () => {
       expect(getByText("One time code")).toBeTruthy();
     });
 
-    fireEvent.changeText(getByPlaceholderText("*****"), "123456");
+    fireEvent.changeText(getByPlaceholderText("12345678"), "12345678");
     fireEvent.press(getByText("Submit"));
 
     await waitFor(() => {
