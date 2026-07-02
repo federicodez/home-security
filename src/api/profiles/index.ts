@@ -7,6 +7,21 @@ type ProfileUpdate = {
   full_name: string;
 };
 
+export type PositionPreference = {
+  station: string;
+  rank: number;
+};
+
+type PositionPreferencesUpdate = {
+  stations: string[];
+};
+
+type InviteVolunteerInput = {
+  email: string;
+  full_name: string;
+  role?: "admin" | "volunteer";
+};
+
 export type VolunteerService = {
   service_id: string;
   service_name: string;
@@ -93,6 +108,11 @@ export const useVolunteers = (serviceId: string) => {
               name,
               starts_at
             )
+          ),
+
+          position_preferences (
+            station,
+            rank
           )
         `,
         )
@@ -105,6 +125,28 @@ export const useVolunteers = (serviceId: string) => {
     },
   });
 };
+
+export function usePositionPreferences() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["position-preferences", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("position_preferences")
+        .select("station, rank")
+        .eq("user_id", user.id)
+        .order("rank");
+
+      if (error) throw error;
+
+      return (data ?? []) as PositionPreference[];
+    },
+  });
+}
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
@@ -131,26 +173,82 @@ export function useUpdateProfile() {
       if (error) throw error;
     },
 
-    onMutate: async (values) => {
-      await queryClient.cancelQueries({ queryKey: ["profile"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
+    },
+  });
+}
 
-      const previousProfile = queryClient.getQueryData(["profile"]);
-      const fullName = values.full_name.trim();
+export function useUpdatePositionPreferences() {
+  const queryClient = useQueryClient();
 
-      queryClient.setQueryData(["profile"], (old: any) => ({
-        ...old,
-        full_name: fullName,
+  return useMutation({
+    mutationFn: async (values: PositionPreferencesUpdate) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("No user");
+
+      const { error: deleteError } = await supabase
+        .from("position_preferences")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (deleteError) throw deleteError;
+
+      const rows = values.stations.map((station, index) => ({
+        user_id: user.id,
+        station,
+        rank: index + 1,
       }));
 
-      return { previousProfile };
-    },
+      if (rows.length === 0) return;
 
-    onError: (_error, _values, context) => {
-      queryClient.setQueryData(["profile"], context?.previousProfile);
+      const { error: insertError } = await supabase
+        .from("position_preferences")
+        .insert(rows);
+
+      if (insertError) throw insertError;
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["position-preferences"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
+    },
+  });
+}
+
+export function useInviteVolunteer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (values: InviteVolunteerInput) => {
+      const email = values.email.trim().toLowerCase();
+      const fullName = values.full_name.trim();
+
+      if (!email) throw new Error("Email is required");
+      if (!fullName) throw new Error("Full name is required");
+
+      const { data, error } = await supabase.functions.invoke(
+        "invite-volunteer",
+        {
+          body: {
+            email,
+            full_name: fullName,
+            role: values.role ?? "volunteer",
+          },
+        },
+      );
+
+      if (error) throw error;
+
+      return data;
+    },
+
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["volunteers"] });
     },

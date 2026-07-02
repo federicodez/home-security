@@ -6,6 +6,9 @@ import {
   useUpdateAvailability,
   useVolunteerAssignments,
   useVolunteers,
+  usePositionPreferences,
+  useUpdatePositionPreferences,
+  useInviteVolunteer,
 } from "../profiles";
 import { supabase } from "@/utils/supabase";
 import { useAuth } from "@/providers/AuthProvider";
@@ -15,6 +18,9 @@ jest.mock("@/utils/supabase", () => ({
   supabase: {
     auth: {
       getUser: jest.fn(),
+    },
+    functions: {
+      invoke: jest.fn(),
     },
     from: jest.fn(),
     rpc: jest.fn(),
@@ -151,6 +157,33 @@ describe("profiles api", () => {
     ]);
   });
 
+  it("loads the current user's ranked position preferences", async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: [
+        { station: "B", rank: 1 },
+        { station: "A", rank: 2 },
+      ],
+      error: null,
+    });
+    const eq = jest.fn(() => ({ order }));
+    const select = jest.fn(() => ({ eq }));
+    mockSupabase.from.mockReturnValue({ select } as never);
+
+    const { result } = renderHook(() => usePositionPreferences(), {
+      wrapper: createQueryWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("position_preferences");
+    expect(eq).toHaveBeenCalledWith("user_id", "profile-1");
+    expect(order).toHaveBeenCalledWith("rank");
+    expect(result.current.data).toEqual([
+      { station: "B", rank: 1 },
+      { station: "A", rank: 2 },
+    ]);
+  });
+
   it("updates current user availability and invalidates dependent queries", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: {
@@ -184,6 +217,81 @@ describe("profiles api", () => {
       queryKey: ["volunteers"],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
+  });
+
+  it("replaces the current user's position preferences", async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: {
+        user: { id: "profile-1" },
+      },
+    } as never);
+    const deleteEq = jest.fn().mockResolvedValue({ error: null });
+    const deletePreferences = jest.fn(() => ({ eq: deleteEq }));
+    const insert = jest.fn().mockResolvedValue({ error: null });
+    mockSupabase.from
+      .mockReturnValueOnce({ delete: deletePreferences } as never)
+      .mockReturnValueOnce({ insert } as never);
+
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = jest.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdatePositionPreferences(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    result.current.mutate({ stations: ["B", "A"] });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(deleteEq).toHaveBeenCalledWith("user_id", "profile-1");
+    expect(insert).toHaveBeenCalledWith([
+      { user_id: "profile-1", station: "B", rank: 1 },
+      { user_id: "profile-1", station: "A", rank: 2 },
+    ]);
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["position-preferences"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteers"],
+    });
+  });
+
+  it("invites a volunteer through the edge function", async () => {
+    mockSupabase.functions.invoke.mockResolvedValue({
+      data: { profile: { id: "profile-2" } },
+      error: null,
+    } as never);
+
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = jest.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useInviteVolunteer(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    result.current.mutate({
+      email: "  GRACE@example.COM ",
+      full_name: "  Grace Hopper  ",
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockSupabase.functions.invoke).toHaveBeenCalledWith(
+      "invite-volunteer",
+      {
+        body: {
+          email: "grace@example.com",
+          full_name: "Grace Hopper",
+          role: "volunteer",
+        },
+      },
+    );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteer-assignments"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteers"],
+    });
   });
 
   it("updates the current user's profile name and invalidates roster queries", async () => {

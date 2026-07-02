@@ -1,8 +1,11 @@
 import React from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useProfile } from "@/api/profiles";
 
 export default function TabLayout() {
+  const { data: user } = useProfile();
+  const canManageRoster = user?.role === "admin";
   const GOLD = "#D4BE8F";
   const TAB_BG = "#111111";
   const ACTIVE_BG = "rgba(212,190,143,0.14)";
@@ -84,10 +87,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="volunteers"
         options={{
-          title: "Roster",
+          title: canManageRoster ? "Roster" : "Profile",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
-              name="account-group-outline"
+              name={canManageRoster ? "account-group-outline" : "account-outline"}
               size={size + 6}
               color={color}
             />

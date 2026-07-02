@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
 } from "react-native";
+import { useMemo } from "react";
 import { useVolunteers } from "@/api/profiles";
 import { defaultStyles } from "@/constants/Styles";
 import type { AssignmentWithRelations } from "@/types";
@@ -18,6 +19,7 @@ interface UsersModalProps {
   onModalVisible: (value: boolean) => void;
   onAssign: (user: string) => void;
   assignments?: AssignmentWithRelations[];
+  selectedStation?: string;
 }
 
 const UsersModal = ({
@@ -26,8 +28,23 @@ const UsersModal = ({
   onModalVisible,
   onAssign,
   assignments,
+  selectedStation,
 }: UsersModalProps) => {
   const { data } = useVolunteers(serviceId);
+  const volunteers = useMemo(() => {
+    const preferenceRank = (volunteer: NonNullable<typeof data>[number]) =>
+      volunteer.position_preferences?.find(
+        (preference) => preference.station === selectedStation,
+      )?.rank ?? Number.MAX_SAFE_INTEGER;
+
+    return [...(data ?? [])].sort((a, b) => {
+      const rankDelta = preferenceRank(a) - preferenceRank(b);
+
+      if (rankDelta !== 0) return rankDelta;
+
+      return (a.full_name ?? "").localeCompare(b.full_name ?? "");
+    });
+  }, [data, selectedStation]);
 
   if (!modalVisible) {
     return null;
@@ -49,7 +66,7 @@ const UsersModal = ({
               <View style={styles.header}>
                 <Text style={styles.title}>Assign Volunteer</Text>
                 <Text style={styles.subtitle}>
-                  {data?.length ?? 0} available
+                  {volunteers.length} available
                 </Text>
               </View>
 
@@ -57,12 +74,15 @@ const UsersModal = ({
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
               >
-                {data?.map(({ id, full_name }) => {
+                {volunteers.map(({ id, full_name, position_preferences }) => {
                   const currentAssignment = assignments?.find(
                     (assignment) =>
                       assignment.service_id === serviceId &&
                       assignment.user_id === id,
                   );
+                  const preferenceRank = position_preferences?.find(
+                    (preference) => preference.station === selectedStation,
+                  )?.rank;
 
                   return (
                     <TouchableOpacity
@@ -86,13 +106,17 @@ const UsersModal = ({
                         <Text
                           style={[
                             styles.assignmentHint,
-                            currentAssignment
-                              ? styles.assignedHint
+                          currentAssignment
+                            ? styles.assignedHint
+                            : preferenceRank
+                              ? styles.preferenceHint
                               : styles.availableHint,
                           ]}
                         >
                           {currentAssignment
                             ? `Currently: Station ${currentAssignment.station}`
+                            : preferenceRank
+                              ? `Preference #${preferenceRank} for ${selectedStation}`
                             : "Available for this service"}
                         </Text>
                       </View>
@@ -128,6 +152,10 @@ const styles = StyleSheet.create({
 
   assignedHint: {
     color: defaultStyles.primary,
+  },
+
+  preferenceHint: {
+    color: "#E5E7EB",
   },
 
   availableHint: {

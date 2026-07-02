@@ -8,6 +8,7 @@ const mockSetPage = jest.fn();
 const mockMain = jest.fn();
 const mockOutside = jest.fn();
 const mockHomeKids = jest.fn();
+const mockUsersModal = jest.fn();
 
 jest.mock("@/api/assignments", () => ({
   useAssignmentList: jest.fn(),
@@ -110,8 +111,9 @@ jest.mock("../UsersModal", () => {
   const React = require("react");
   const { Text } = require("react-native");
 
-  function MockUsersModal({ serviceId }: { serviceId: string }) {
-    return React.createElement(Text, null, `users-${serviceId}`);
+  function MockUsersModal(props: { serviceId: string }) {
+    mockUsersModal(props);
+    return React.createElement(Text, null, `users-${props.serviceId}`);
   }
 
   MockUsersModal.displayName = "MockUsersModal";
@@ -127,6 +129,7 @@ describe("FloorPlan", () => {
     mockMain.mockClear();
     mockOutside.mockClear();
     mockHomeKids.mockClear();
+    mockUsersModal.mockClear();
     mockUseAssignmentList.mockReturnValue({
       data: [makeAssignment()],
     } as ReturnType<typeof useAssignmentList>);
@@ -192,5 +195,10 @@ describe("FloorPlan", () => {
       station: "A",
       profileId: null,
     });
+    expect(mockUsersModal).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        selectedStation: "A",
+      }),
+    );
   });
 });

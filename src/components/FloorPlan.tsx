@@ -97,6 +97,7 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
         onModalVisible={setModalVisible}
         onAssign={handleAssign}
         assignments={assignments}
+        selectedStation={position}
       />
     </View>
   );

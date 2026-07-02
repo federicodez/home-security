@@ -47,6 +47,10 @@ export type VolunteerWithAssignments = Pick<
       starts_at: string;
     };
   }[];
+  position_preferences?: {
+    station: string;
+    rank: number;
+  }[];
 };
 
 export const AVAILABILITY_FIELDS = {

@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { render } from "@testing-library/react-native";
 import TabLayout from "../_layout";
+import { useProfile } from "@/api/profiles";
 
 const mockScreen = jest.fn();
+
+jest.mock("@/api/profiles", () => ({
+  useProfile: jest.fn(),
+}));
 
 jest.mock("expo-router", () => {
   const React = require("react");
@@ -35,12 +40,17 @@ jest.mock("@expo/vector-icons", () => ({
   },
 }));
 
+const mockUseProfile = jest.mocked(useProfile);
+
 describe("TabLayout", () => {
   beforeEach(() => {
     mockScreen.mockClear();
+    mockUseProfile.mockReturnValue({
+      data: { role: "volunteer" },
+    } as ReturnType<typeof useProfile>);
   });
 
-  it("registers the expected tab screens", () => {
+  it("registers profile tab for volunteers", () => {
     render(<TabLayout />);
 
     expect(mockScreen).toHaveBeenCalledTimes(4);
@@ -65,6 +75,22 @@ describe("TabLayout", () => {
         options: expect.objectContaining({ title: "11 AM" }),
       }),
     );
+    expect(mockScreen).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        name: "volunteers",
+        options: expect.objectContaining({ title: "Profile" }),
+      }),
+    );
+  });
+
+  it("registers roster tab for admins", () => {
+    mockUseProfile.mockReturnValue({
+      data: { role: "admin" },
+    } as ReturnType<typeof useProfile>);
+
+    render(<TabLayout />);
+
     expect(mockScreen).toHaveBeenNthCalledWith(
       4,
       expect.objectContaining({
