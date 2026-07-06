@@ -128,4 +128,67 @@ describe("assignments api", () => {
     });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
   });
+
+  it("clears an assignment with a direct assignments update", async () => {
+    const queryClient = createTestQueryClient();
+    const updateResult = jest.fn().mockResolvedValue({
+      data: [{ id: "assignment-1" }],
+      error: null,
+    });
+    const stationEq = jest.fn(() => ({ select: updateResult }));
+    const serviceEq = jest.fn(() => ({ eq: stationEq }));
+    const update = jest.fn(() => ({ eq: serviceEq }));
+
+    mockSupabase.from.mockReturnValue({ update } as never);
+
+    const { result } = renderHook(() => useUpdateAssignment(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    result.current.mutate({
+      serviceId: "service-1",
+      station: "A",
+      profileId: null,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("assignments");
+    expect(update).toHaveBeenCalledWith({ user_id: null });
+    expect(serviceEq).toHaveBeenCalledWith("service_id", "service-1");
+    expect(stationEq).toHaveBeenCalledWith("station", "A");
+    expect(updateResult).toHaveBeenCalledWith("id");
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the assignment rpc when direct clear cannot confirm an update", async () => {
+    const updateResult = jest.fn().mockResolvedValue({
+      data: [],
+      error: null,
+    });
+    const stationEq = jest.fn(() => ({ select: updateResult }));
+    const serviceEq = jest.fn(() => ({ eq: stationEq }));
+    const update = jest.fn(() => ({ eq: serviceEq }));
+
+    mockSupabase.from.mockReturnValue({ update } as never);
+    mockSupabase.rpc.mockResolvedValue({ error: null });
+
+    const { result } = renderHook(() => useUpdateAssignment(), {
+      wrapper: createQueryWrapper(),
+    });
+
+    result.current.mutate({
+      serviceId: "service-1",
+      station: "A",
+      profileId: null,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("assign_user_to_station", {
+      p_user: null,
+      p_service: "service-1",
+      p_station: "A",
+    });
+  });
 });

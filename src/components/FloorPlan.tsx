@@ -8,13 +8,19 @@ import Outside from "./Outside";
 import HomeKids from "./HomeKids";
 import PaginationDots from "./PaginationDots";
 import UsersModal from "./UsersModal";
+import type { AvailabilityField } from "@/types";
 
 interface FloorPlanProps {
   serviceId: string;
   serviceTime: string;
+  serviceAvailabilityColumn?: AvailabilityField | string;
 }
 
-export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
+export default function FloorPlan({
+  serviceId,
+  serviceTime,
+  serviceAvailabilityColumn,
+}: FloorPlanProps) {
   const pagerRef = useRef<PagerView>(null);
   const [page, setPage] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
@@ -23,9 +29,9 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
   const { data: assignments } = useAssignmentList(serviceId);
   const { mutate: updatePosition } = useUpdateAssignment();
 
-  const handleAssign = (profileId: string) => {
+  const handleAssign = (profileId: string, station = position) => {
     try {
-      updatePosition({ serviceId, station: position, profileId });
+      updatePosition({ serviceId, station, profileId });
     } catch {
       throw new Error("position update failed");
     } finally {
@@ -33,8 +39,8 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
     }
   };
 
-  const handleClear = () =>
-    updatePosition({ serviceId, station: position, profileId: null });
+  const handleClear = (station: string) =>
+    updatePosition({ serviceId, station, profileId: null });
 
   return (
     <View style={styles.container}>
@@ -96,8 +102,10 @@ export default function FloorPlan({ serviceId, serviceTime }: FloorPlanProps) {
         modalVisible={modalVisible}
         onModalVisible={setModalVisible}
         onAssign={handleAssign}
+        onClear={handleClear}
         assignments={assignments}
         selectedStation={position}
+        serviceAvailabilityColumn={serviceAvailabilityColumn}
       />
     </View>
   );

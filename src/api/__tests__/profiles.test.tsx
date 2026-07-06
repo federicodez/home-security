@@ -124,24 +124,16 @@ describe("profiles api", () => {
     ]);
   });
 
-  it("loads volunteers using the selected service availability column", async () => {
-    const serviceSingle = jest.fn().mockResolvedValue({
-      data: { availability_column: "available_8am" },
-      error: null,
-    });
-    const serviceEq = jest.fn(() => ({ single: serviceSingle }));
-    const serviceSelect = jest.fn(() => ({ eq: serviceEq }));
-
+  it("loads the full volunteer roster for assignment", async () => {
     const order = jest.fn().mockResolvedValue({
-      data: [{ id: "profile-1", full_name: "Ada Lovelace" }],
+      data: [
+        { id: "profile-1", full_name: "Ada Lovelace", available_8am: false },
+      ],
       error: null,
     });
-    const profileEq = jest.fn(() => ({ order }));
-    const profileSelect = jest.fn(() => ({ eq: profileEq }));
+    const profileSelect = jest.fn(() => ({ order }));
 
-    mockSupabase.from
-      .mockReturnValueOnce({ select: serviceSelect } as never)
-      .mockReturnValueOnce({ select: profileSelect } as never);
+    mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
 
     const { result } = renderHook(() => useVolunteers("service-1"), {
       wrapper: createQueryWrapper(),
@@ -149,12 +141,74 @@ describe("profiles api", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(serviceEq).toHaveBeenCalledWith("id", "service-1");
-    expect(profileEq).toHaveBeenCalledWith("available_8am", true);
+    expect(mockSupabase.from).toHaveBeenCalledWith("profiles");
     expect(order).toHaveBeenCalledWith("full_name");
     expect(result.current.data).toEqual([
-      { id: "profile-1", full_name: "Ada Lovelace" },
+      { id: "profile-1", full_name: "Ada Lovelace", available_8am: false },
     ]);
+  });
+
+  it("falls back to the assignments roster when profile reads return no rows", async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: [],
+      error: null,
+    });
+    const profileSelect = jest.fn(() => ({ order }));
+
+    mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: [{ user_id: "profile-1", full_name: "Ada Lovelace", services: [] }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useVolunteers("service-1"), {
+      wrapper: createQueryWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith(
+      "get_volunteer_service_assignments",
+    );
+    expect(result.current.data).toEqual([
+      {
+        id: "profile-1",
+        full_name: "Ada Lovelace",
+        email: null,
+        avatar_url: null,
+        role: "volunteer",
+        available_8am: null,
+        available_930am: null,
+        available_11am: null,
+        assignments: [],
+        position_preferences: [],
+      },
+    ]);
+  });
+
+  it("falls back to the assignments roster when profile reads fail", async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: null,
+      error: { message: "permission denied for table profiles" },
+    });
+    const profileSelect = jest.fn(() => ({ order }));
+
+    mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: [{ user_id: "profile-2", full_name: "Grace Hopper", services: [] }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useVolunteers("service-1"), {
+      wrapper: createQueryWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.[0]).toMatchObject({
+      id: "profile-2",
+      full_name: "Grace Hopper",
+    });
   });
 
   it("loads the current user's ranked position preferences", async () => {

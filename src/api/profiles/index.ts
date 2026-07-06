@@ -76,19 +76,28 @@ export function useVolunteerAssignments() {
   });
 }
 
+function assignmentsRosterToVolunteers(
+  assignments: VolunteerAssignments[],
+): VolunteerWithAssignments[] {
+  return assignments.map(({ user_id, full_name }) => ({
+    id: user_id,
+    full_name,
+    email: null,
+    avatar_url: null,
+    role: "volunteer",
+    available_8am: null,
+    available_930am: null,
+    available_11am: null,
+    assignments: [],
+    position_preferences: [],
+  }));
+}
+
 export const useVolunteers = (serviceId: string) => {
   return useQuery({
     queryKey: ["volunteers", serviceId],
     enabled: !!serviceId,
     queryFn: async () => {
-      const { data: service, error: serviceError } = await supabase
-        .from("services")
-        .select("availability_column")
-        .eq("id", serviceId)
-        .single();
-
-      if (serviceError) throw serviceError;
-
       const { data, error } = await supabase
         .from("profiles")
         .select(
@@ -116,10 +125,15 @@ export const useVolunteers = (serviceId: string) => {
           )
         `,
         )
-        .eq(service.availability_column, true)
         .order("full_name");
 
-      if (error) throw error;
+      if (error) {
+        return assignmentsRosterToVolunteers(await fetchVolunteerAssignments());
+      }
+
+      if (!data?.length) {
+        return assignmentsRosterToVolunteers(await fetchVolunteerAssignments());
+      }
 
       return data as unknown as VolunteerWithAssignments[];
     },

@@ -78,6 +78,19 @@ export const useUpdateAssignment = () => {
       station: string;
       profileId: string | null;
     }) => {
+      if (profileId === null) {
+        const { data, error } = await supabase
+          .from("assignments")
+          .update({ user_id: null })
+          .eq("service_id", serviceId)
+          .eq("station", station)
+          .select("id");
+
+        if (!error && data?.length) {
+          return;
+        }
+      }
+
       const { error } = await supabase.rpc("assign_user_to_station", {
         p_user: profileId,
         p_service: serviceId,

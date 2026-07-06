@@ -16,15 +16,17 @@ describe("UsersModal", () => {
         {
           id: "profile-1",
           full_name: "Ada Lovelace",
+          available_8am: false,
           position_preferences: [{ station: "A", rank: 2 }],
         },
         {
           id: "profile-2",
           full_name: "Grace Hopper",
+          available_8am: true,
           position_preferences: [{ station: "A", rank: 1 }],
         },
       ],
-    } as ReturnType<typeof useVolunteers>);
+    } as unknown as ReturnType<typeof useVolunteers>);
   });
 
   it("renders volunteers and assignment hints", () => {
@@ -34,13 +36,16 @@ describe("UsersModal", () => {
         modalVisible
         onModalVisible={jest.fn()}
         onAssign={jest.fn()}
+        onClear={jest.fn()}
         assignments={[makeAssignment()]}
         selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
       />,
     );
 
     expect(getByText("Assign Volunteer")).toBeTruthy();
-    expect(getByText("2 available")).toBeTruthy();
+    expect(getByText("1 available / 2 total")).toBeTruthy();
+    expect(getByText("Clear Station A")).toBeTruthy();
     expect(getByText("ADA LOVELACE")).toBeTruthy();
     expect(getByText("Currently: Station A")).toBeTruthy();
     expect(getByText("GRACE HOPPER")).toBeTruthy();
@@ -54,8 +59,10 @@ describe("UsersModal", () => {
         modalVisible
         onModalVisible={jest.fn()}
         onAssign={jest.fn()}
+        onClear={jest.fn()}
         assignments={[]}
         selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
       />,
     );
 
@@ -76,15 +83,72 @@ describe("UsersModal", () => {
         modalVisible
         onModalVisible={onModalVisible}
         onAssign={onAssign}
+        onClear={jest.fn()}
         assignments={[]}
         selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
       />,
     );
 
     fireEvent.press(getByText("GRACE HOPPER"));
     fireEvent.press(getByText("Cancel"));
 
-    expect(onAssign).toHaveBeenCalledWith("profile-2");
+    expect(onAssign).toHaveBeenCalledWith("profile-2", "A");
+    expect(onModalVisible).toHaveBeenCalledWith(false);
+  });
+
+  it("does not mark volunteers unavailable when availability is unknown", () => {
+    mockUseVolunteers.mockReturnValueOnce({
+      data: [
+        {
+          id: "profile-1",
+          full_name: "Ada Lovelace",
+          available_8am: null,
+          available_930am: null,
+          available_11am: null,
+          position_preferences: [],
+        },
+      ],
+    } as unknown as ReturnType<typeof useVolunteers>);
+
+    const { getByText, queryByText } = render(
+      <UsersModal
+        serviceId="service-1"
+        modalVisible
+        onModalVisible={jest.fn()}
+        onAssign={jest.fn()}
+        onClear={jest.fn()}
+        assignments={[]}
+        selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
+      />,
+    );
+
+    expect(getByText("1 volunteer")).toBeTruthy();
+    expect(getByText("Available for this service")).toBeTruthy();
+    expect(queryByText("Not marked available for this service")).toBeNull();
+  });
+
+  it("clears the selected assigned station from the modal", () => {
+    const onClear = jest.fn();
+    const onModalVisible = jest.fn();
+
+    const { getByText } = render(
+      <UsersModal
+        serviceId="service-1"
+        modalVisible
+        onModalVisible={onModalVisible}
+        onAssign={jest.fn()}
+        onClear={onClear}
+        assignments={[makeAssignment()]}
+        selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
+      />,
+    );
+
+    fireEvent.press(getByText("Clear Station A"));
+
+    expect(onClear).toHaveBeenCalledWith("A");
     expect(onModalVisible).toHaveBeenCalledWith(false);
   });
 });

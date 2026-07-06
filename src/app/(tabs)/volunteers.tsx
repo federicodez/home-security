@@ -40,6 +40,8 @@ export default function Tab() {
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFullName, setInviteFullName] = useState("");
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
+  const [preferencesExpanded, setPreferencesExpanded] = useState(false);
   const [rankedStations, setRankedStations] = useState<string[]>([]);
   const { data: user } = useProfile();
   const { data: volunteers } = useVolunteerAssignments();
@@ -193,6 +195,41 @@ export default function Tab() {
   );
 
   const closeVolunteerDetails = () => setSelectedVolunteer(null);
+  const helpItems = canManageRoster
+    ? [
+        {
+          icon: "map-outline" as const,
+          title: "Assign stations",
+          body: "Open a service tab, tap a station, then choose a volunteer from the assign list.",
+        },
+        {
+          icon: "trash-outline" as const,
+          title: "Clear a station",
+          body: "Tap an assigned station and use Clear Station at the top of the assign modal.",
+        },
+        {
+          icon: "people-outline" as const,
+          title: "Manage volunteers",
+          body: "Use the roster to review assignment counts and invite approved volunteers.",
+        },
+      ]
+    : [
+        {
+          icon: "calendar-outline" as const,
+          title: "Set availability",
+          body: "Turn on the services where you can serve. Assigned services are locked until an admin clears them.",
+        },
+        {
+          icon: "swap-vertical-outline" as const,
+          title: "Rank stations",
+          body: "Move preferred stations higher so admins can see where you would like to serve.",
+        },
+        {
+          icon: "checkmark-circle-outline" as const,
+          title: "Check assignments",
+          body: "Your Assignments shows the service and station where you are scheduled.",
+        },
+      ];
 
   return (
     <SafeAreaProvider>
@@ -204,6 +241,22 @@ export default function Tab() {
         />
 
         <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.helpBar}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open help"
+              style={styles.helpButton}
+              onPress={() => setHelpModalVisible(true)}
+            >
+              <Ionicons
+                name="help-circle-outline"
+                size={20}
+                color={defaultStyles.secondary}
+              />
+              <Text style={styles.helpButtonText}>Help</Text>
+            </Pressable>
+          </View>
+
           <Availability
             user={user}
             assigned8am={assigned8am}
@@ -250,70 +303,93 @@ export default function Tab() {
 
           {rankedStations.length > 0 ? (
             <View style={styles.preferencesCard}>
-              <View style={styles.volunteersHeader}>
-                <Text style={styles.sectionTitle}>Position Preferences</Text>
-                <Text style={styles.helperText}>Ranked</Text>
-              </View>
-
-              {rankedStations.map((station, index) => (
-                <View key={station} style={styles.preferenceRow}>
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankText}>{index + 1}</Text>
-                  </View>
-
-                  <Text style={styles.preferenceStation}>{station}</Text>
-
-                  <View style={styles.rankActions}>
-                    <Pressable
-                      accessibilityLabel={`Move ${station} up`}
-                      disabled={index === 0}
-                      onPress={() => moveStation(index, -1)}
-                      style={[
-                        styles.rankButton,
-                        index === 0 && styles.disabledButton,
-                      ]}
-                    >
-                      <Ionicons
-                        name="chevron-up"
-                        size={20}
-                        color={defaultStyles.primary}
-                      />
-                    </Pressable>
-
-                    <Pressable
-                      accessibilityLabel={`Move ${station} down`}
-                      disabled={index === rankedStations.length - 1}
-                      onPress={() => moveStation(index, 1)}
-                      style={[
-                        styles.rankButton,
-                        index === rankedStations.length - 1 &&
-                          styles.disabledButton,
-                      ]}
-                    >
-                      <Ionicons
-                        name="chevron-down"
-                        size={20}
-                        color={defaultStyles.primary}
-                      />
-                    </Pressable>
-                  </View>
-                </View>
-              ))}
-
               <Pressable
-                style={[
-                  styles.saveButton,
-                  !canSavePreferences && styles.disabledButton,
-                ]}
-                disabled={!canSavePreferences}
-                onPress={savePositionPreferences}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle position preferences"
+                accessibilityState={{ expanded: preferencesExpanded }}
+                style={styles.collapsibleHeader}
+                onPress={() => setPreferencesExpanded((expanded) => !expanded)}
               >
-                <Text style={styles.saveButtonText}>
-                  {isUpdatingPositionPreferences
-                    ? "Saving..."
-                    : "Save Preferences"}
-                </Text>
+                <View>
+                  <Text style={styles.sectionTitle}>Position Preferences</Text>
+                  <Text style={styles.helperText}>
+                    {rankedStations.length} ranked
+                  </Text>
+                </View>
+                <Ionicons
+                  name={
+                    preferencesExpanded
+                      ? "chevron-up-outline"
+                      : "chevron-down-outline"
+                  }
+                  size={22}
+                  color={defaultStyles.primary}
+                />
               </Pressable>
+
+              {preferencesExpanded ? (
+                <>
+                  {rankedStations.map((station, index) => (
+                    <View key={station} style={styles.preferenceRow}>
+                      <View style={styles.rankBadge}>
+                        <Text style={styles.rankText}>{index + 1}</Text>
+                      </View>
+
+                      <Text style={styles.preferenceStation}>{station}</Text>
+
+                      <View style={styles.rankActions}>
+                        <Pressable
+                          accessibilityLabel={`Move ${station} up`}
+                          disabled={index === 0}
+                          onPress={() => moveStation(index, -1)}
+                          style={[
+                            styles.rankButton,
+                            index === 0 && styles.disabledButton,
+                          ]}
+                        >
+                          <Ionicons
+                            name="chevron-up"
+                            size={20}
+                            color={defaultStyles.primary}
+                          />
+                        </Pressable>
+
+                        <Pressable
+                          accessibilityLabel={`Move ${station} down`}
+                          disabled={index === rankedStations.length - 1}
+                          onPress={() => moveStation(index, 1)}
+                          style={[
+                            styles.rankButton,
+                            index === rankedStations.length - 1 &&
+                              styles.disabledButton,
+                          ]}
+                        >
+                          <Ionicons
+                            name="chevron-down"
+                            size={20}
+                            color={defaultStyles.primary}
+                          />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))}
+
+                  <Pressable
+                    style={[
+                      styles.saveButton,
+                      !canSavePreferences && styles.disabledButton,
+                    ]}
+                    disabled={!canSavePreferences}
+                    onPress={savePositionPreferences}
+                  >
+                    <Text style={styles.saveButtonText}>
+                      {isUpdatingPositionPreferences
+                        ? "Saving..."
+                        : "Save Preferences"}
+                    </Text>
+                  </Pressable>
+                </>
+              ) : null}
             </View>
           ) : null}
 
@@ -424,6 +500,51 @@ export default function Tab() {
         <Modal
           animationType="slide"
           transparent
+          visible={helpModalVisible}
+          onRequestClose={() => setHelpModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setHelpModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalHandle} />
+                  <Text style={styles.modalTitle}>How It Works</Text>
+                  <Text style={styles.modalSubtitle}>
+                    {canManageRoster
+                      ? "Quick reference for roster admins."
+                      : "Quick reference for your profile and schedule."}
+                  </Text>
+
+                  {helpItems.map((item) => (
+                    <View key={item.title} style={styles.helpItem}>
+                      <View style={styles.helpIcon}>
+                        <Ionicons
+                          name={item.icon}
+                          size={20}
+                          color={defaultStyles.primary}
+                        />
+                      </View>
+                      <View style={styles.helpCopy}>
+                        <Text style={styles.helpTitle}>{item.title}</Text>
+                        <Text style={styles.helpBody}>{item.body}</Text>
+                      </View>
+                    </View>
+                  ))}
+
+                  <Pressable
+                    style={styles.cancelButton}
+                    onPress={() => setHelpModalVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Done</Text>
+                  </Pressable>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+        <Modal
+          animationType="slide"
+          transparent
           visible={inviteModalVisible}
           onRequestClose={closeInviteModal}
         >
@@ -509,6 +630,27 @@ const styles = StyleSheet.create({
     opacity: 0.04,
   },
 
+  helpBar: {
+    alignItems: "flex-end",
+    marginBottom: 12,
+  },
+
+  helpButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: defaultStyles.primary,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+
+  helpButtonText: {
+    color: defaultStyles.secondary,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
   card: {
     backgroundColor: "#111111",
     borderRadius: 22,
@@ -586,6 +728,12 @@ const styles = StyleSheet.create({
     borderColor: "rgba(212,190,143,0.4)",
     padding: 18,
     marginBottom: 18,
+  },
+
+  collapsibleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 
   profileInput: {
@@ -773,6 +921,49 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "800",
     marginBottom: 6,
+  },
+
+  modalSubtitle: {
+    color: "#9CA3AF",
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 16,
+  },
+
+  helpItem: {
+    flexDirection: "row",
+    gap: 12,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
+  },
+
+  helpIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(212,190,143,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(212,190,143,0.35)",
+  },
+
+  helpCopy: {
+    flex: 1,
+  },
+
+  helpTitle: {
+    color: "#E5E7EB",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  helpBody: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 4,
   },
 
   cancelButton: {

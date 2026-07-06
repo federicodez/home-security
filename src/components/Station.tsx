@@ -1,4 +1,5 @@
 import { Circle, G, Text } from "react-native-svg";
+import { useRef } from "react";
 import { defaultStyles } from "@/constants/Styles";
 import { getInitials } from "@/utils/helpers";
 import type { AssignmentWithRelations } from "@/types";
@@ -9,9 +10,11 @@ type StationProps = {
   modalVisible: boolean;
   onModalVisible: (modal: boolean) => void;
   onAssign: (profileId: string) => void;
-  onClear: () => void;
+  onClear: (station: string) => void;
   onPosition: (position: string) => void;
 };
+
+const HOLD_TO_CLEAR_DELAY_MS = 500;
 
 export default function Station({
   assignment,
@@ -20,6 +23,8 @@ export default function Station({
   onClear,
   onPosition,
 }: StationProps) {
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didHoldClear = useRef(false);
   const position = assignment.position;
 
   if (
@@ -30,15 +35,40 @@ export default function Station({
     return null;
   }
 
+  const startHoldClear = (station: string) => {
+    didHoldClear.current = false;
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+
+    holdTimer.current = setTimeout(() => {
+      didHoldClear.current = true;
+      onClear(station);
+    }, HOLD_TO_CLEAR_DELAY_MS);
+  };
+
+  const stopHoldClear = () => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  };
+
+  const openAssignModal = (station: string) => {
+    if (didHoldClear.current) {
+      didHoldClear.current = false;
+      return;
+    }
+
+    onModalVisible(!modalVisible);
+    onPosition(station);
+  };
+
   if (assignment.profile) {
     const name = getInitials(assignment.profile?.full_name?.toUpperCase());
     return (
       <G
-        onPress={() => {
-          onModalVisible(!modalVisible);
-          onPosition(position.station);
-        }}
-        onLongPress={onClear}
+        onPress={() => openAssignModal(position.station)}
+        onPressIn={() => startHoldClear(position.station)}
+        onPressOut={stopHoldClear}
       >
         {/* invisible hit target */}
         <Circle cx={position.x} cy={position.y} r={32} fill="transparent" />
@@ -85,11 +115,9 @@ export default function Station({
   }
   return (
     <G
-      onPress={() => {
-        onModalVisible(!modalVisible);
-        onPosition(assignment.station);
-      }}
-      onLongPress={onClear}
+      onPress={() => openAssignModal(assignment.station)}
+      onPressIn={() => startHoldClear(assignment.station)}
+      onPressOut={stopHoldClear}
     >
       {/* invisible hit target */}
       <Circle

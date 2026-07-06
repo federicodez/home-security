@@ -11,15 +11,27 @@ import {
 import { useMemo } from "react";
 import { useVolunteers } from "@/api/profiles";
 import { defaultStyles } from "@/constants/Styles";
-import type { AssignmentWithRelations } from "@/types";
+import {
+  AVAILABILITY_FIELDS,
+  type AssignmentWithRelations,
+  type AvailabilityField,
+} from "@/types";
 
 interface UsersModalProps {
   serviceId: string;
   modalVisible: boolean;
   onModalVisible: (value: boolean) => void;
-  onAssign: (user: string) => void;
+  onAssign: (user: string, station: string) => void;
+  onClear: (station: string) => void;
   assignments?: AssignmentWithRelations[];
   selectedStation?: string;
+  serviceAvailabilityColumn?: AvailabilityField | string;
+}
+
+const availabilityFields = new Set<string>(Object.values(AVAILABILITY_FIELDS));
+
+function isAvailabilityField(value?: string): value is AvailabilityField {
+  return !!value && availabilityFields.has(value);
 }
 
 const UsersModal = ({
@@ -27,10 +39,20 @@ const UsersModal = ({
   modalVisible,
   onModalVisible,
   onAssign,
+  onClear,
   assignments,
   selectedStation,
+  serviceAvailabilityColumn,
 }: UsersModalProps) => {
   const { data } = useVolunteers(serviceId);
+  const availabilityField = isAvailabilityField(serviceAvailabilityColumn)
+    ? serviceAvailabilityColumn
+    : undefined;
+  const hasAvailabilityData =
+    !!availabilityField &&
+    (data ?? []).some(
+      (volunteer) => typeof volunteer[availabilityField] === "boolean",
+    );
   const volunteers = useMemo(() => {
     const preferenceRank = (volunteer: NonNullable<typeof data>[number]) =>
       volunteer.position_preferences?.find(
@@ -38,13 +60,47 @@ const UsersModal = ({
       )?.rank ?? Number.MAX_SAFE_INTEGER;
 
     return [...(data ?? [])].sort((a, b) => {
+      if (hasAvailabilityData && availabilityField) {
+        const availabilityDelta =
+          Number(b[availabilityField] === true) -
+          Number(a[availabilityField] === true);
+
+        if (availabilityDelta !== 0) return availabilityDelta;
+      }
+
       const rankDelta = preferenceRank(a) - preferenceRank(b);
 
       if (rankDelta !== 0) return rankDelta;
 
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [data, selectedStation]);
+  }, [availabilityField, data, hasAvailabilityData, selectedStation]);
+  const availableCount = hasAvailabilityData && availabilityField
+    ? volunteers.filter((volunteer) => volunteer[availabilityField] === true)
+        .length
+    : volunteers.length;
+  const volunteerCountLabel = `${volunteers.length} volunteer${
+    volunteers.length === 1 ? "" : "s"
+  }`;
+  const selectedAssignment = assignments?.find(
+    (assignment) =>
+      assignment.service_id === serviceId &&
+      assignment.station === selectedStation &&
+      assignment.user_id,
+  );
+
+  const clearSelectedStation = () => {
+    if (!selectedStation) return;
+
+    onClear(selectedStation);
+    onModalVisible(false);
+  };
+
+  const assignSelectedStation = (profileId: string) => {
+    if (!selectedStation) return;
+
+    onAssign(profileId, selectedStation);
+  };
 
   if (!modalVisible) {
     return null;
@@ -66,15 +122,47 @@ const UsersModal = ({
               <View style={styles.header}>
                 <Text style={styles.title}>Assign Volunteer</Text>
                 <Text style={styles.subtitle}>
-                  {volunteers.length} available
+                  {hasAvailabilityData
+                    ? `${availableCount} available / ${volunteers.length} total`
+                    : volunteerCountLabel}
                 </Text>
               </View>
+
+              {selectedAssignment ? (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={clearSelectedStation}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color={defaultStyles.secondary}
+                  />
+                  <View style={styles.clearButtonTextWrap}>
+                    <Text style={styles.clearButtonText}>
+                      Clear Station {selectedStation}
+                    </Text>
+                    <Text style={styles.clearButtonHint}>
+                      {selectedAssignment.profile?.full_name ??
+                        "Assigned volunteer"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ) : null}
 
               <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
               >
-                {volunteers.map(({ id, full_name, position_preferences }) => {
+                {volunteers.map(
+                  ({
+                    id,
+                    full_name,
+                    position_preferences,
+                    available_8am,
+                    available_930am,
+                    available_11am,
+                  }) => {
                   const currentAssignment = assignments?.find(
                     (assignment) =>
                       assignment.service_id === serviceId &&
@@ -83,12 +171,19 @@ const UsersModal = ({
                   const preferenceRank = position_preferences?.find(
                     (preference) => preference.station === selectedStation,
                   )?.rank;
+                  const isAvailableForService = hasAvailabilityData && availabilityField
+                    ? Boolean(
+                        { available_8am, available_930am, available_11am }[
+                          availabilityField
+                        ],
+                      )
+                    : true;
 
                   return (
                     <TouchableOpacity
                       key={id}
                       style={styles.option}
-                      onPress={() => onAssign(id)}
+                      onPress={() => assignSelectedStation(id)}
                     >
                       <View style={styles.userIcon}>
                         <Ionicons
@@ -110,19 +205,24 @@ const UsersModal = ({
                             ? styles.assignedHint
                             : preferenceRank
                               ? styles.preferenceHint
-                              : styles.availableHint,
+                              : isAvailableForService
+                                ? styles.availableHint
+                                : styles.unavailableHint,
                           ]}
                         >
                           {currentAssignment
                             ? `Currently: Station ${currentAssignment.station}`
                             : preferenceRank
                               ? `Preference #${preferenceRank} for ${selectedStation}`
-                            : "Available for this service"}
+                              : isAvailableForService
+                                ? "Available for this service"
+                                : "Not marked available for this service"}
                         </Text>
                       </View>
                     </TouchableOpacity>
                   );
-                })}
+                  },
+                )}
               </ScrollView>
 
               <TouchableOpacity
@@ -160,6 +260,37 @@ const styles = StyleSheet.create({
 
   availableHint: {
     color: "#6B7280",
+  },
+
+  unavailableHint: {
+    color: "#9CA3AF",
+  },
+
+  clearButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: defaultStyles.primary,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+
+  clearButtonTextWrap: {
+    flex: 1,
+  },
+
+  clearButtonText: {
+    color: defaultStyles.secondary,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  clearButtonHint: {
+    color: "rgba(0,0,0,0.7)",
+    fontSize: 13,
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,

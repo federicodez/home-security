@@ -7,7 +7,7 @@ interface PositionListProps {
   modalVisible: boolean;
   onModalVisible: (modal: boolean) => void;
   onAssign: (profileId: string) => void;
-  onClear: () => void;
+  onClear: (station: string) => void;
   onPosition: (position: string) => void;
   assignments?: AssignmentWithRelations[];
 }

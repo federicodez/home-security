@@ -181,18 +181,18 @@ describe("FloorPlan", () => {
     const mainProps = mockMain.mock.calls.at(-1)?.[0];
 
     act(() => {
-      mainProps.onAssign("profile-1");
-      mainProps.onClear();
+      mainProps.onAssign("profile-1", "B");
+      mainProps.onClear("B");
     });
 
     expect(mutate).toHaveBeenCalledWith({
       serviceId: "service-1",
-      station: "A",
+      station: "B",
       profileId: "profile-1",
     });
     expect(mutate).toHaveBeenCalledWith({
       serviceId: "service-1",
-      station: "A",
+      station: "B",
       profileId: null,
     });
     expect(mockUsersModal).toHaveBeenLastCalledWith(

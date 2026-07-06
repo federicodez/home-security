@@ -1,9 +1,19 @@
 import { render } from "@testing-library/react-native";
+import { act } from "react";
 import { Circle, G, Text as SvgText } from "react-native-svg";
 import Station from "../Station";
 import { makeAssignment } from "../__fixtures__/fixtures";
 
 describe("Station", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
   it("renders an assigned station and handles interactions", () => {
     const onModalVisible = jest.fn();
     const onPosition = jest.fn();
@@ -22,13 +32,68 @@ describe("Station", () => {
     );
 
     UNSAFE_getByType(G).props.onPress();
-    UNSAFE_getByType(G).props.onLongPress();
+
+    act(() => {
+      UNSAFE_getByType(G).props.onPressIn();
+      jest.advanceTimersByTime(500);
+      UNSAFE_getByType(G).props.onPressOut();
+    });
 
     expect(UNSAFE_getAllByType(SvgText)[0].props.children).toContain("A");
     expect(UNSAFE_getAllByType(SvgText)[1].props.children).toContain("AL");
     expect(onModalVisible).toHaveBeenCalledWith(true);
     expect(onPosition).toHaveBeenCalledWith("A");
-    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onClear).toHaveBeenCalledWith("A");
+  });
+
+  it("does not clear when the station is released before the hold threshold", () => {
+    const onClear = jest.fn();
+
+    const { UNSAFE_getByType } = render(
+      <Station
+        serviceId="service-1"
+        assignment={makeAssignment()}
+        modalVisible={false}
+        onModalVisible={jest.fn()}
+        onAssign={jest.fn()}
+        onClear={onClear}
+        onPosition={jest.fn()}
+      />,
+    );
+
+    act(() => {
+      UNSAFE_getByType(G).props.onPressIn();
+      jest.advanceTimersByTime(499);
+      UNSAFE_getByType(G).props.onPressOut();
+    });
+
+    expect(onClear).not.toHaveBeenCalled();
+  });
+
+  it("does not open the assign modal after a hold clear", () => {
+    const onModalVisible = jest.fn();
+
+    const { UNSAFE_getByType } = render(
+      <Station
+        serviceId="service-1"
+        assignment={makeAssignment()}
+        modalVisible={false}
+        onModalVisible={onModalVisible}
+        onAssign={jest.fn()}
+        onClear={jest.fn()}
+        onPosition={jest.fn()}
+      />,
+    );
+
+    act(() => {
+      UNSAFE_getByType(G).props.onPressIn();
+      jest.advanceTimersByTime(500);
+      UNSAFE_getByType(G).props.onPressOut();
+    });
+
+    UNSAFE_getByType(G).props.onPress();
+
+    expect(onModalVisible).not.toHaveBeenCalled();
   });
 
   it("uses the unassigned station styling when no profile is present", () => {

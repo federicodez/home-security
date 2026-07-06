@@ -1,4 +1,5 @@
 import { Circle, Text, G } from "react-native-svg";
+import { useRef } from "react";
 import type { ProfileRow } from "@/types";
 import { getInitials } from "@/utils/helpers";
 
@@ -10,8 +11,10 @@ interface PositionProps {
   modalVisible: boolean;
   onModalVisible: (value: boolean) => void;
   onPosition: (station: string) => void;
-  onClear: () => void;
+  onClear: (station: string) => void;
 }
+
+const HOLD_TO_CLEAR_DELAY_MS = 500;
 
 const Position = ({
   user,
@@ -23,6 +26,9 @@ const Position = ({
   onPosition,
   onClear,
 }: PositionProps) => {
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didHoldClear = useRef(false);
+
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
     return null;
   }
@@ -32,13 +38,38 @@ const Position = ({
   const hitRadius = assigned && station === "H" ? 40 : 32;
   const showNameBadge = assigned && station !== "G";
 
+  const startHoldClear = () => {
+    didHoldClear.current = false;
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+
+    holdTimer.current = setTimeout(() => {
+      didHoldClear.current = true;
+      onClear(station);
+    }, HOLD_TO_CLEAR_DELAY_MS);
+  };
+
+  const stopHoldClear = () => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  };
+
+  const openAssignModal = () => {
+    if (didHoldClear.current) {
+      didHoldClear.current = false;
+      return;
+    }
+
+    onModalVisible(!modalVisible);
+    onPosition(station);
+  };
+
   return (
     <G
-      onPress={() => {
-        onModalVisible(!modalVisible);
-        onPosition(station);
-      }}
-      onLongPress={onClear}
+      onPress={openAssignModal}
+      onPressIn={startHoldClear}
+      onPressOut={stopHoldClear}
     >
       {/* invisible hit target */}
       <Circle cx={x} cy={y} r={hitRadius} fill="transparent" />
