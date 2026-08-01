@@ -12,6 +12,7 @@ interface MainProps {
   onClear: (station: string) => void;
   onPosition: (position: string) => void;
   assignments?: AssignmentWithRelations[];
+  visibleStations?: string[];
 }
 
 export default function Main({
@@ -23,6 +24,7 @@ export default function Main({
   onClear,
   onPosition,
   assignments,
+  visibleStations,
 }: MainProps) {
   return (
     <View style={styles.mapWrapper}>
@@ -150,6 +152,7 @@ export default function Main({
           onPosition={onPosition}
           onModalVisible={onModalVisible}
           assignments={assignments}
+          visibleStations={visibleStations}
         />
       </Svg>
     </View>

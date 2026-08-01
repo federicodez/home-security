@@ -43,16 +43,30 @@ describe("Outside", () => {
       <Outside
         {...props}
         assignments={[
-          makeAssignment({ id: "o1", station: "O1" }),
-          makeAssignment({ id: "o2", station: "O2" }),
+          makeAssignment({ id: "o", station: "O" }),
         ]}
       />,
     );
 
     expect(getByText("Outside Grounds")).toBeTruthy();
     expect(getByText("8am Service")).toBeTruthy();
-    expect(getByText("station-O1")).toBeTruthy();
-    expect(getByText("station-O2")).toBeTruthy();
+    expect(getByText("station-O")).toBeTruthy();
+  });
+
+  it("renders only visible outside stations", () => {
+    const { getByText, queryByText } = render(
+      <Outside
+        {...props}
+        assignments={[
+          makeAssignment({ id: "o", station: "O" }),
+          makeAssignment({ id: "a", station: "A" }),
+        ]}
+        visibleStations={["O"]}
+      />,
+    );
+
+    expect(getByText("station-O")).toBeTruthy();
+    expect(queryByText("station-A")).toBeNull();
   });
 
   it("renders nothing when there are no outside assignments", () => {

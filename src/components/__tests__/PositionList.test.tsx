@@ -22,8 +22,8 @@ describe("PositionList", () => {
       makeAssignment({ id: "a", station: "A" }),
       makeAssignment({
         id: "outside",
-        station: "O1",
-        position: { id: "outside-pos", station: "O1", x: 1, y: 2 } as never,
+        station: "O",
+        position: { id: "outside-pos", station: "O", x: 1, y: 2 } as never,
       }),
       makeAssignment({
         id: "kids",
@@ -54,8 +54,29 @@ describe("PositionList", () => {
     );
 
     expect(getByText("station-A")).toBeTruthy();
-    expect(queryByText("station-O1")).toBeNull();
+    expect(queryByText("station-O")).toBeNull();
     expect(queryByText("station-K")).toBeNull();
     expect(UNSAFE_getAllByType(Text)).toHaveLength(1);
+  });
+
+  it("renders only visible indoor stations", () => {
+    const { getByText, queryByText } = render(
+      <PositionList
+        serviceId="service-1"
+        modalVisible={false}
+        onModalVisible={jest.fn()}
+        onAssign={jest.fn()}
+        onClear={jest.fn()}
+        onPosition={jest.fn()}
+        assignments={[
+          makeAssignment({ id: "c", station: "C" }),
+          makeAssignment({ id: "e", station: "E" }),
+        ]}
+        visibleStations={["C"]}
+      />,
+    );
+
+    expect(getByText("station-C")).toBeTruthy();
+    expect(queryByText("station-E")).toBeNull();
   });
 });

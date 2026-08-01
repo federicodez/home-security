@@ -21,6 +21,7 @@ type KidsFloorProps = {
   onClear: (station: string) => void;
   onPosition: (position: string) => void;
   assignments?: AssignmentWithRelations[];
+  visibleStations?: string[];
 };
 
 export default function KidsFloorPlan({
@@ -32,9 +33,13 @@ export default function KidsFloorPlan({
   onClear,
   onPosition,
   assignments,
+  visibleStations,
 }: KidsFloorProps) {
   const assignment = assignments?.find(
-    ({ station, service: { id } }) => id === serviceId && station === "K",
+    ({ station, service: { id } }) =>
+      id === serviceId &&
+      station === "K" &&
+      (!visibleStations || visibleStations.includes(station)),
   );
   return (
     assignment && (

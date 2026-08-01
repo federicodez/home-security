@@ -1,19 +1,9 @@
 import { render } from "@testing-library/react-native";
-import { act } from "react";
 import { Circle, G, Text as SvgText } from "react-native-svg";
 import Position from "../Position";
 import { profile } from "../__fixtures__/fixtures";
 
 describe("Position", () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
-
   it("renders initials for an assigned position and handles press actions", () => {
     const onModalVisible = jest.fn();
     const onPosition = jest.fn();
@@ -22,7 +12,7 @@ describe("Position", () => {
     const { UNSAFE_getAllByType, UNSAFE_getByType } = render(
       <Position
         user={profile}
-        station="G"
+        station="F"
         x={50}
         y={60}
         modalVisible={false}
@@ -34,24 +24,18 @@ describe("Position", () => {
 
     UNSAFE_getByType(G).props.onPress();
 
-    act(() => {
-      UNSAFE_getByType(G).props.onPressIn();
-      jest.advanceTimersByTime(500);
-      UNSAFE_getByType(G).props.onPressOut();
-    });
-
-    expect(UNSAFE_getAllByType(SvgText)[0].props.children).toBe("G");
+    expect(UNSAFE_getAllByType(SvgText)[0].props.children).toBe("F");
     expect(UNSAFE_getAllByType(SvgText)[1].props.children).toBe("AL");
     expect(onModalVisible).toHaveBeenCalledWith(true);
-    expect(onPosition).toHaveBeenCalledWith("G");
-    expect(onClear).toHaveBeenCalledWith("G");
+    expect(onPosition).toHaveBeenCalledWith("F");
+    expect(onClear).not.toHaveBeenCalled();
   });
 
   it("renders an unassigned position", () => {
     const { UNSAFE_getAllByType } = render(
       <Position
         user={null}
-        station="B"
+        station="D"
         x={50}
         y={60}
         modalVisible
@@ -61,7 +45,7 @@ describe("Position", () => {
       />,
     );
 
-    expect(UNSAFE_getAllByType(SvgText)[0].props.children).toBe("B");
+    expect(UNSAFE_getAllByType(SvgText)[0].props.children).toBe("D");
     expect(UNSAFE_getAllByType(Circle)[1].props.fill).toBe("#374151");
   });
 });

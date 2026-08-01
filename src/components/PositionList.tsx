@@ -10,6 +10,7 @@ interface PositionListProps {
   onClear: (station: string) => void;
   onPosition: (position: string) => void;
   assignments?: AssignmentWithRelations[];
+  visibleStations?: string[];
 }
 
 const PositionList = ({
@@ -20,10 +21,14 @@ const PositionList = ({
   onClear,
   onPosition,
   assignments,
+  visibleStations,
 }: PositionListProps) =>
   assignments
     ?.filter(({ service: { id } }) => id === serviceId)
-    .filter(({ station }) => !["O1", "O2", "K"].includes(station))
+    .filter(
+      ({ station }) => !visibleStations || visibleStations.includes(station),
+    )
+    .filter(({ station }) => !["O", "K"].includes(station))
     .map((assignment) => (
       <G key={assignment.id}>
         <Station

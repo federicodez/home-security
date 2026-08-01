@@ -55,4 +55,16 @@ describe("HomeKids", () => {
 
     expect(toJSON()).toBeNull();
   });
+
+  it("renders nothing when kids is not visible", () => {
+    const { toJSON } = render(
+      <HomeKids
+        {...props}
+        assignments={[makeAssignment({ station: "K" })]}
+        visibleStations={[]}
+      />,
+    );
+
+    expect(toJSON()).toBeNull();
+  });
 });

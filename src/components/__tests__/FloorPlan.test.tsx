@@ -181,24 +181,44 @@ describe("FloorPlan", () => {
     const mainProps = mockMain.mock.calls.at(-1)?.[0];
 
     act(() => {
-      mainProps.onAssign("profile-1", "B");
-      mainProps.onClear("B");
+      mainProps.onAssign("profile-1", "E");
+      mainProps.onClear("E");
     });
 
     expect(mutate).toHaveBeenCalledWith({
       serviceId: "service-1",
-      station: "B",
+      station: "E",
       profileId: "profile-1",
     });
     expect(mutate).toHaveBeenCalledWith({
       serviceId: "service-1",
-      station: "B",
+      station: "E",
       profileId: null,
     });
     expect(mockUsersModal).toHaveBeenLastCalledWith(
       expect.objectContaining({
         selectedStation: "A",
       }),
+    );
+  });
+
+  it("shows all positions without applying a visibility filter", () => {
+    render(
+      <FloorPlan
+        serviceId="service-1"
+        serviceTime="8am"
+        serviceAvailabilityColumn="available_8am"
+      />,
+    );
+
+    expect(mockMain).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ visibleStations: expect.any(Array) }),
+    );
+    expect(mockOutside).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ visibleStations: expect.any(Array) }),
+    );
+    expect(mockHomeKids).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ visibleStations: expect.any(Array) }),
     );
   });
 });

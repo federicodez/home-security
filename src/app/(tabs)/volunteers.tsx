@@ -19,6 +19,7 @@ import {
   useUpdateProfile,
   usePositionPreferences,
   useUpdatePositionPreferences,
+  useResetAssignmentsAndAvailability,
   useInviteVolunteer,
 } from "@/api/profiles";
 import { usePositionList } from "@/api/positions";
@@ -26,6 +27,25 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import Availability from "@/components/Availability";
 import VolunteerDetailsModal from "@/components/VolunteerDetailsModal";
 import { defaultStyles } from "@/constants/Styles";
+
+const IMPORTANT_POSITION_ORDER = ["C", "K", "O", "E", "F"];
+
+function positionPriority(station: string) {
+  const normalizedStation = ["O2", "02"].includes(station) ? "O" : station;
+  const index = IMPORTANT_POSITION_ORDER.indexOf(normalizedStation);
+
+  return index === -1 ? IMPORTANT_POSITION_ORDER.length : index;
+}
+
+function sortStationsByPriority(stations: string[]) {
+  return [...stations].sort((a, b) => {
+    const priorityDelta = positionPriority(a) - positionPriority(b);
+
+    if (priorityDelta !== 0) return priorityDelta;
+
+    return a.localeCompare(b);
+  });
+}
 
 export default function Tab() {
   const [selectedVolunteer, setSelectedVolunteer] = useState<{
@@ -56,12 +76,16 @@ export default function Tab() {
   } = useUpdatePositionPreferences();
   const { mutate: inviteVolunteer, isPending: isInvitingVolunteer } =
     useInviteVolunteer();
+  const { mutate: resetAssignmentsAndAvailability, isPending: isResetting } =
+    useResetAssignmentsAndAvailability();
 
   const positionStations = useMemo(
     () =>
-      Array.from(
-        new Set((positions ?? []).map((position) => position.station)),
-      ).filter((station): station is string => !!station),
+      sortStationsByPriority(
+        Array.from(
+          new Set((positions ?? []).map((position) => position.station)),
+        ).filter((station): station is string => !!station),
+      ),
     [positions],
   );
 
@@ -70,8 +94,8 @@ export default function Tab() {
       .sort((a, b) => a.rank - b.rank)
       .map((preference) => preference.station)
       .filter((station) => positionStations.includes(station));
-    const remainingStations = positionStations.filter(
-      (station) => !preferredStations.includes(station),
+    const remainingStations = sortStationsByPriority(
+      positionStations.filter((station) => !preferredStations.includes(station)),
     );
 
     return [...preferredStations, ...remainingStations];
@@ -91,7 +115,10 @@ export default function Tab() {
     isProfileIncomplete && !!trimmedFullName && !isUpdatingProfile;
   const hasPreferenceChanges =
     rankedStations.length === savedRankedStations.length &&
-    rankedStations.some((station, index) => station !== savedRankedStations[index]);
+    (rankedStations.some(
+      (station, index) => station !== savedRankedStations[index],
+    ) ||
+      ((positionPreferences?.length ?? 0) === 0 && rankedStations.length > 0));
   const canSavePreferences =
     hasPreferenceChanges && !isUpdatingPositionPreferences;
   const normalizedInviteEmail = inviteEmail.trim().toLowerCase();
@@ -173,6 +200,35 @@ export default function Tab() {
     );
   };
 
+  const confirmReset = () => {
+    if (isResetting) return;
+
+    Alert.alert(
+      "Reset week?",
+      "This clears all assignments and availability for every volunteer.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: () => {
+            resetAssignmentsAndAvailability(undefined, {
+              onSuccess: () => {
+                Alert.alert("Week reset");
+              },
+              onError: (error) => {
+                Alert.alert(
+                  "Failed to reset week",
+                  error instanceof Error ? error.message : undefined,
+                );
+              },
+            });
+          },
+        },
+      ],
+    );
+  };
+
   const availableCount = [
     user?.available_8am,
     user?.available_930am,
@@ -217,17 +273,22 @@ export default function Tab() {
         {
           icon: "calendar-outline" as const,
           title: "Set availability",
-          body: "Turn on the services where you can serve. Assigned services are locked until an admin clears them.",
-        },
-        {
-          icon: "swap-vertical-outline" as const,
-          title: "Rank stations",
-          body: "Move preferred stations higher so admins can see where you would like to serve.",
+          body: "Turn on the services where you can serve so the roster reflects when you are available.",
         },
         {
           icon: "checkmark-circle-outline" as const,
-          title: "Check assignments",
-          body: "Your Assignments shows the service and station where you are scheduled.",
+          title: "Take a position",
+          body: "Tap an open position on a service map, then confirm that you want to take that position.",
+        },
+        {
+          icon: "swap-vertical-outline" as const,
+          title: "Rank preferences",
+          body: "Open Position Preferences and move your favorite stations higher so admins can see where you prefer to serve.",
+        },
+        {
+          icon: "close-circle-outline" as const,
+          title: "Remove yourself",
+          body: "Tap your assigned position and use the remove action in the confirmation modal.",
         },
       ];
 
@@ -251,9 +312,8 @@ export default function Tab() {
               <Ionicons
                 name="help-circle-outline"
                 size={20}
-                color={defaultStyles.secondary}
+                color={defaultStyles.primary}
               />
-              <Text style={styles.helpButtonText}>Help</Text>
             </Pressable>
           </View>
 
@@ -298,6 +358,39 @@ export default function Tab() {
                   {isUpdatingProfile ? "Saving..." : "Save Name"}
                 </Text>
               </Pressable>
+            </View>
+          ) : null}
+
+          {!canManageRoster ? (
+            <View style={styles.assignmentsCard}>
+              <View style={styles.volunteersHeader}>
+                <Text style={styles.sectionTitle}>Your Assignments</Text>
+                <Text style={styles.helperText}>
+                  {userAssignments?.services?.filter((service) => service.station)
+                    .length ?? 0}{" "}
+                  assigned
+                </Text>
+              </View>
+
+              {userAssignments?.services?.some((service) => service.station) ? (
+                userAssignments.services
+                  .filter((service) => service.station)
+                  .map((service) => (
+                    <View
+                      key={`${service.service_name}-${service.station}`}
+                      style={styles.assignmentRow}
+                    >
+                      <Text style={styles.service}>
+                        {service.service_name ?? "Service"}
+                      </Text>
+                      <Text style={[styles.station, styles.assigned]}>
+                        Station {service.station}
+                      </Text>
+                    </View>
+                  ))
+              ) : (
+                <Text style={styles.emptyText}>No assignments yet</Text>
+              )}
             </View>
           ) : null}
 
@@ -393,54 +486,41 @@ export default function Tab() {
             </View>
           ) : null}
 
-          {!canManageRoster ? (
-            <View style={styles.assignmentsCard}>
-              <View style={styles.volunteersHeader}>
-                <Text style={styles.sectionTitle}>Your Assignments</Text>
-                <Text style={styles.helperText}>
-                  {userAssignments?.services?.filter((service) => service.station)
-                    .length ?? 0}{" "}
-                  assigned
-                </Text>
-              </View>
-
-              {userAssignments?.services?.some((service) => service.station) ? (
-                userAssignments.services
-                  .filter((service) => service.station)
-                  .map((service) => (
-                    <View
-                      key={`${service.service_name}-${service.station}`}
-                      style={styles.assignmentRow}
-                    >
-                      <Text style={styles.service}>
-                        {service.service_name ?? "Service"}
-                      </Text>
-                      <Text style={[styles.station, styles.assigned]}>
-                        Station {service.station}
-                      </Text>
-                    </View>
-                  ))
-              ) : (
-                <Text style={styles.emptyText}>No assignments yet</Text>
-              )}
-            </View>
-          ) : null}
-
           {canManageRoster ? (
             <View style={styles.volunteersCard}>
               <View style={styles.volunteersHeader}>
                 <Text style={styles.sectionTitle}>Volunteers</Text>
-                <Pressable
-                  style={styles.inviteButton}
-                  onPress={() => setInviteModalVisible(true)}
-                >
-                  <Ionicons
-                    name="person-add-outline"
-                    size={18}
-                    color={defaultStyles.secondary}
-                  />
-                  <Text style={styles.inviteButtonText}>Invite</Text>
-                </Pressable>
+                <View style={styles.rosterActions}>
+                  <Pressable
+                    style={[
+                      styles.resetButton,
+                      isResetting && styles.disabledButton,
+                    ]}
+                    disabled={isResetting}
+                    onPress={confirmReset}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={18}
+                      color={defaultStyles.primary}
+                    />
+                    <Text style={styles.resetButtonText}>
+                      {isResetting ? "Resetting..." : "Reset"}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={styles.inviteButton}
+                    onPress={() => setInviteModalVisible(true)}
+                  >
+                    <Ionicons
+                      name="person-add-outline"
+                      size={18}
+                      color={defaultStyles.secondary}
+                    />
+                    <Text style={styles.inviteButtonText}>Invite</Text>
+                  </Pressable>
+                </View>
               </View>
 
               {volunteers?.map(({ user_id, full_name, services }) => {
@@ -617,7 +697,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000",
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 8,
     paddingBottom: 24,
   },
 
@@ -632,23 +712,15 @@ const styles = StyleSheet.create({
 
   helpBar: {
     alignItems: "flex-end",
-    marginBottom: 12,
+    height: 28,
   },
 
   helpButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: defaultStyles.primary,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-
-  helpButtonText: {
-    color: defaultStyles.secondary,
-    fontSize: 13,
-    fontWeight: "800",
+    justifyContent: "center",
+    width: 28,
+    height: 28,
   },
 
   card: {
@@ -782,6 +854,29 @@ const styles = StyleSheet.create({
   helperText: {
     color: "#9CA3AF",
     fontSize: 13,
+  },
+
+  rosterActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  resetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(212,190,143,0.45)",
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+
+  resetButtonText: {
+    color: defaultStyles.primary,
+    fontSize: 13,
+    fontWeight: "800",
   },
 
   inviteButton: {

@@ -269,6 +269,27 @@ export function useInviteVolunteer() {
   });
 }
 
+export function useResetAssignmentsAndAvailability() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc(
+        "admin_reset_assignments_and_availability",
+      );
+
+      if (error) throw error;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteer-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteers"] });
+    },
+  });
+}
+
 export function useUpdateAvailability() {
   const queryClient = useQueryClient();
 

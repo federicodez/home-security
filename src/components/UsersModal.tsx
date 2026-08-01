@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useMemo } from "react";
-import { useVolunteers } from "@/api/profiles";
+import { useProfile, useVolunteers } from "@/api/profiles";
 import { defaultStyles } from "@/constants/Styles";
 import {
   AVAILABILITY_FIELDS,
@@ -44,7 +44,9 @@ const UsersModal = ({
   selectedStation,
   serviceAvailabilityColumn,
 }: UsersModalProps) => {
+  const { data: user } = useProfile();
   const { data } = useVolunteers(serviceId);
+  const canManageRoster = user?.role === "admin";
   const availabilityField = isAvailabilityField(serviceAvailabilityColumn)
     ? serviceAvailabilityColumn
     : undefined;
@@ -54,12 +56,15 @@ const UsersModal = ({
       (volunteer) => typeof volunteer[availabilityField] === "boolean",
     );
   const volunteers = useMemo(() => {
+    const assignableVolunteers = canManageRoster
+      ? [...(data ?? [])]
+      : (data ?? []).filter((volunteer) => volunteer.id === user?.id);
     const preferenceRank = (volunteer: NonNullable<typeof data>[number]) =>
       volunteer.position_preferences?.find(
         (preference) => preference.station === selectedStation,
       )?.rank ?? Number.MAX_SAFE_INTEGER;
 
-    return [...(data ?? [])].sort((a, b) => {
+    return assignableVolunteers.sort((a, b) => {
       if (hasAvailabilityData && availabilityField) {
         const availabilityDelta =
           Number(b[availabilityField] === true) -
@@ -74,7 +79,14 @@ const UsersModal = ({
 
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [availabilityField, data, hasAvailabilityData, selectedStation]);
+  }, [
+    availabilityField,
+    canManageRoster,
+    data,
+    hasAvailabilityData,
+    selectedStation,
+    user?.id,
+  ]);
   const availableCount = hasAvailabilityData && availabilityField
     ? volunteers.filter((volunteer) => volunteer[availabilityField] === true)
         .length
@@ -88,6 +100,16 @@ const UsersModal = ({
       assignment.station === selectedStation &&
       assignment.user_id,
   );
+  const canClearSelectedAssignment =
+    !!selectedAssignment &&
+    (canManageRoster || selectedAssignment.user_id === user?.id);
+  const canAssignToSelectedStation =
+    canManageRoster ||
+    !selectedAssignment ||
+    selectedAssignment.user_id === user?.id;
+  const selectedStationLabel = selectedStation
+    ? `Station ${selectedStation}`
+    : "selected station";
 
   const clearSelectedStation = () => {
     if (!selectedStation) return;
@@ -102,8 +124,98 @@ const UsersModal = ({
     onAssign(profileId, selectedStation);
   };
 
+  const assignCurrentUserToSelectedStation = () => {
+    if (!user?.id || !selectedStation) return;
+
+    onAssign(user.id, selectedStation);
+  };
+
   if (!modalVisible) {
     return null;
+  }
+
+  if (!canManageRoster) {
+    return (
+      <Modal
+        animationType="slide"
+        transparent
+        visible={modalVisible}
+        onRequestClose={() => onModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => onModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContainer}>
+                <View style={styles.handle} />
+
+                <View style={styles.header}>
+                  <Text style={styles.title}>
+                    {canAssignToSelectedStation
+                      ? "Take Position?"
+                      : "Position Unavailable"}
+                  </Text>
+                  <Text style={styles.subtitle}>{selectedStationLabel}</Text>
+                </View>
+
+                {selectedAssignment && !canAssignToSelectedStation ? (
+                  <Text style={styles.confirmationText}>
+                    {selectedStationLabel} is already assigned.
+                  </Text>
+                ) : selectedAssignment ? (
+                  <>
+                    <Text style={styles.confirmationText}>
+                      You are assigned to {selectedStationLabel}.
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.clearButton}
+                      onPress={clearSelectedStation}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={defaultStyles.secondary}
+                      />
+                      <View style={styles.clearButtonTextWrap}>
+                        <Text style={styles.clearButtonText}>
+                          Remove Me From {selectedStationLabel}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.confirmationText}>
+                      Do you want to take {selectedStationLabel} for this
+                      service?
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.confirmButton}
+                      onPress={assignCurrentUserToSelectedStation}
+                    >
+                      <Ionicons
+                        name="checkmark-circle-outline"
+                        size={20}
+                        color={defaultStyles.secondary}
+                      />
+                      <Text style={styles.confirmButtonText}>
+                        Take {selectedStationLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => onModalVisible(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    );
   }
 
   return (
@@ -128,7 +240,7 @@ const UsersModal = ({
                 </Text>
               </View>
 
-              {selectedAssignment ? (
+              {canClearSelectedAssignment ? (
                 <TouchableOpacity
                   style={styles.clearButton}
                   onPress={clearSelectedStation}
@@ -150,79 +262,90 @@ const UsersModal = ({
                 </TouchableOpacity>
               ) : null}
 
+              {selectedAssignment && !canAssignToSelectedStation ? (
+                <Text style={styles.lockedStationText}>
+                  Station {selectedStation} is already assigned.
+                </Text>
+              ) : null}
+
               <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
               >
-                {volunteers.map(
-                  ({
-                    id,
-                    full_name,
-                    position_preferences,
-                    available_8am,
-                    available_930am,
-                    available_11am,
-                  }) => {
-                  const currentAssignment = assignments?.find(
-                    (assignment) =>
-                      assignment.service_id === serviceId &&
-                      assignment.user_id === id,
-                  );
-                  const preferenceRank = position_preferences?.find(
-                    (preference) => preference.station === selectedStation,
-                  )?.rank;
-                  const isAvailableForService = hasAvailabilityData && availabilityField
-                    ? Boolean(
-                        { available_8am, available_930am, available_11am }[
-                          availabilityField
-                        ],
-                      )
-                    : true;
+                {canAssignToSelectedStation
+                  ? volunteers.map(
+                      ({
+                        id,
+                        full_name,
+                        position_preferences,
+                        available_8am,
+                        available_930am,
+                        available_11am,
+                      }) => {
+                        const currentAssignment = assignments?.find(
+                          (assignment) =>
+                            assignment.service_id === serviceId &&
+                            assignment.user_id === id,
+                        );
+                        const preferenceRank = position_preferences?.find(
+                          (preference) => preference.station === selectedStation,
+                        )?.rank;
+                        const isAvailableForService =
+                          hasAvailabilityData && availabilityField
+                            ? Boolean(
+                                {
+                                  available_8am,
+                                  available_930am,
+                                  available_11am,
+                                }[availabilityField],
+                              )
+                            : true;
 
-                  return (
-                    <TouchableOpacity
-                      key={id}
-                      style={styles.option}
-                      onPress={() => assignSelectedStation(id)}
-                    >
-                      <View style={styles.userIcon}>
-                        <Ionicons
-                          name="person-outline"
-                          size={20}
-                          color={defaultStyles.primary}
-                        />
-                      </View>
+                        return (
+                          <TouchableOpacity
+                            key={id}
+                            style={styles.option}
+                            onPress={() => assignSelectedStation(id)}
+                          >
+                            <View style={styles.userIcon}>
+                              <Ionicons
+                                name="person-outline"
+                                size={20}
+                                color={defaultStyles.primary}
+                              />
+                            </View>
 
-                      <View style={styles.userInfo}>
-                        <Text style={styles.optionText}>
-                          {full_name?.toUpperCase()}
-                        </Text>
+                            <View style={styles.userInfo}>
+                              <Text style={styles.optionText}>
+                                {full_name?.toUpperCase()}
+                              </Text>
 
-                        <Text
-                          style={[
-                            styles.assignmentHint,
-                          currentAssignment
-                            ? styles.assignedHint
-                            : preferenceRank
-                              ? styles.preferenceHint
-                              : isAvailableForService
-                                ? styles.availableHint
-                                : styles.unavailableHint,
-                          ]}
-                        >
-                          {currentAssignment
-                            ? `Currently: Station ${currentAssignment.station}`
-                            : preferenceRank
-                              ? `Preference #${preferenceRank} for ${selectedStation}`
-                              : isAvailableForService
-                                ? "Available for this service"
-                                : "Not marked available for this service"}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                  },
-                )}
+                              <Text
+                                style={[
+                                  styles.assignmentHint,
+                                  currentAssignment
+                                    ? styles.assignedHint
+                                    : preferenceRank
+                                      ? styles.preferenceHint
+                                      : isAvailableForService
+                                        ? styles.availableHint
+                                        : styles.unavailableHint,
+                                ]}
+                              >
+                                {currentAssignment
+                                  ? `Currently: Station ${currentAssignment.station}`
+                                  : preferenceRank
+                                    ? `Preference #${preferenceRank} for ${selectedStation}`
+                                    : isAvailableForService
+                                      ? "Available for this service"
+                                      : "Not marked available for this service"}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      },
+                    )
+                  : null}
               </ScrollView>
 
               <TouchableOpacity
@@ -264,6 +387,40 @@ const styles = StyleSheet.create({
 
   unavailableHint: {
     color: "#9CA3AF",
+  },
+
+  lockedStationText: {
+    color: "#9CA3AF",
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 21,
+    marginBottom: 14,
+  },
+
+  confirmationText: {
+    color: "#E5E7EB",
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 23,
+    marginBottom: 16,
+  },
+
+  confirmButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: defaultStyles.primary,
+    borderRadius: 14,
+    minHeight: 52,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+
+  confirmButtonText: {
+    color: defaultStyles.secondary,
+    fontSize: 16,
+    fontWeight: "800",
   },
 
   clearButton: {

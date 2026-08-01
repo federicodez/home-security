@@ -9,6 +9,7 @@ import {
   usePositionPreferences,
   useUpdatePositionPreferences,
   useInviteVolunteer,
+  useResetAssignmentsAndAvailability,
 } from "../profiles";
 import { supabase } from "@/utils/supabase";
 import { useAuth } from "@/providers/AuthProvider";
@@ -95,12 +96,22 @@ describe("profiles api", () => {
 
   it("fetches volunteer assignments from the rpc", async () => {
     mockSupabase.rpc.mockResolvedValue({
-      data: [{ user_id: "profile-1", full_name: "Ada Lovelace", services: [] }],
+      data: [
+        {
+          user_id: "profile-1",
+          full_name: "Ada Lovelace",
+          services: [],
+        },
+      ],
       error: null,
     });
 
     await expect(fetchVolunteerAssignments()).resolves.toEqual([
-      { user_id: "profile-1", full_name: "Ada Lovelace", services: [] },
+      {
+        user_id: "profile-1",
+        full_name: "Ada Lovelace",
+        services: [],
+      },
     ]);
     expect(mockSupabase.rpc).toHaveBeenCalledWith(
       "get_volunteer_service_assignments",
@@ -109,7 +120,13 @@ describe("profiles api", () => {
 
   it("uses the volunteer assignments fetcher in React Query", async () => {
     mockSupabase.rpc.mockResolvedValue({
-      data: [{ user_id: "profile-1", full_name: "Ada Lovelace", services: [] }],
+      data: [
+        {
+          user_id: "profile-1",
+          full_name: "Ada Lovelace",
+          services: [],
+        },
+      ],
       error: null,
     });
 
@@ -120,7 +137,11 @@ describe("profiles api", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toEqual([
-      { user_id: "profile-1", full_name: "Ada Lovelace", services: [] },
+      {
+        user_id: "profile-1",
+        full_name: "Ada Lovelace",
+        services: [],
+      },
     ]);
   });
 
@@ -157,7 +178,13 @@ describe("profiles api", () => {
 
     mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
     mockSupabase.rpc.mockResolvedValueOnce({
-      data: [{ user_id: "profile-1", full_name: "Ada Lovelace", services: [] }],
+      data: [
+        {
+          user_id: "profile-1",
+          full_name: "Ada Lovelace",
+          services: [],
+        },
+      ],
       error: null,
     });
 
@@ -195,7 +222,13 @@ describe("profiles api", () => {
 
     mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
     mockSupabase.rpc.mockResolvedValueOnce({
-      data: [{ user_id: "profile-2", full_name: "Grace Hopper", services: [] }],
+      data: [
+        {
+          user_id: "profile-2",
+          full_name: "Grace Hopper",
+          services: [],
+        },
+      ],
       error: null,
     });
 
@@ -214,7 +247,7 @@ describe("profiles api", () => {
   it("loads the current user's ranked position preferences", async () => {
     const order = jest.fn().mockResolvedValue({
       data: [
-        { station: "B", rank: 1 },
+        { station: "E", rank: 1 },
         { station: "A", rank: 2 },
       ],
       error: null,
@@ -233,7 +266,7 @@ describe("profiles api", () => {
     expect(eq).toHaveBeenCalledWith("user_id", "profile-1");
     expect(order).toHaveBeenCalledWith("rank");
     expect(result.current.data).toEqual([
-      { station: "B", rank: 1 },
+      { station: "E", rank: 1 },
       { station: "A", rank: 2 },
     ]);
   });
@@ -293,13 +326,13 @@ describe("profiles api", () => {
       wrapper: createQueryWrapper(queryClient),
     });
 
-    result.current.mutate({ stations: ["B", "A"] });
+    result.current.mutate({ stations: ["E", "A"] });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(deleteEq).toHaveBeenCalledWith("user_id", "profile-1");
     expect(insert).toHaveBeenCalledWith([
-      { user_id: "profile-1", station: "B", rank: 1 },
+      { user_id: "profile-1", station: "E", rank: 1 },
       { user_id: "profile-1", station: "A", rank: 2 },
     ]);
     expect(invalidateQueries).toHaveBeenCalledWith({
@@ -340,6 +373,38 @@ describe("profiles api", () => {
         },
       },
     );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteer-assignments"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["volunteers"],
+    });
+  });
+
+  it("resets assignments and availability through the admin rpc", async () => {
+    mockSupabase.rpc.mockResolvedValue({
+      data: null,
+      error: null,
+    });
+
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = jest.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useResetAssignmentsAndAvailability(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith(
+      "admin_reset_assignments_and_availability",
+    );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["assignments"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["volunteer-assignments"],
     });

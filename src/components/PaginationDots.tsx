@@ -17,7 +17,7 @@ export default function PaginationDots({
         width: "100%",
         flexDirection: "row",
         justifyContent: "center",
-        gap: 10,
+        gap: 18,
       }}
     >
       {Array.from({ length: total }).map((_, index) => (

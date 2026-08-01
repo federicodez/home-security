@@ -14,6 +14,7 @@ type OutsideProps = {
   onClear: (station: string) => void;
   onPosition: (position: string) => void;
   assignments?: AssignmentWithRelations[];
+  visibleStations?: string[];
 };
 
 export default function Outside({
@@ -25,10 +26,13 @@ export default function Outside({
   onClear,
   onPosition,
   assignments,
+  visibleStations,
 }: OutsideProps) {
   const outsideAssignments = assignments?.filter(
     ({ station, service: { id } }) =>
-      id === serviceId && ["O1", "O2"].includes(station),
+      id === serviceId &&
+      station === "O" &&
+      (!visibleStations || visibleStations.includes(station)),
   );
 
   return outsideAssignments?.length ? (
@@ -234,24 +238,18 @@ export default function Outside({
             Area
           </SVGText>
 
-          <Station
-            assignment={outsideAssignments[0]}
-            serviceId={serviceId}
-            modalVisible={modalVisible}
-            onAssign={onAssign}
-            onClear={onClear}
-            onPosition={onPosition}
-            onModalVisible={onModalVisible}
-          />
-          <Station
-            assignment={outsideAssignments[1]}
-            serviceId={serviceId}
-            modalVisible={modalVisible}
-            onAssign={onAssign}
-            onClear={onClear}
-            onPosition={onPosition}
-            onModalVisible={onModalVisible}
-          />
+          {outsideAssignments.map((assignment) => (
+            <Station
+              key={assignment.id}
+              assignment={assignment}
+              serviceId={serviceId}
+              modalVisible={modalVisible}
+              onAssign={onAssign}
+              onClear={onClear}
+              onPosition={onPosition}
+              onModalVisible={onModalVisible}
+            />
+          ))}
           {/* Fences */}
           <Line
             x1="152"
@@ -330,7 +328,7 @@ export default function Outside({
             fill="none"
           />
 
-          {/* Right POA / B */}
+          {/* Right POA */}
           <Line
             x1="368"
             y1="350"

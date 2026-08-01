@@ -188,6 +188,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reset_assignments_and_availability: {
+        Args: never
+        Returns: undefined
+      }
       assign_user_to_station: {
         Args: { p_service: string; p_station: string; p_user: string | null }
         Returns: undefined
