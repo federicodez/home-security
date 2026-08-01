@@ -18,15 +18,20 @@ import { defaultStyles } from "@/constants/Styles";
 const OTP_LENGTH = 8;
 
 const Login = () => {
+  const [loginMode, setLoginMode] = useState<"code" | "password">("code");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   const [cooldown, setCooldown] = useState(0);
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedToken = token.trim();
+  const canSignInWithPassword =
+    !!normalizedEmail && !!password && !isSigningIn;
 
   const sendOtp = async () => {
     if (cooldown > 0 || isSendingCode) return;
@@ -94,6 +99,37 @@ const Login = () => {
     }
   };
 
+  const signInWithPassword = async () => {
+    if (!canSignInWithPassword) return;
+
+    try {
+      setIsSigningIn(true);
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Failed to sign in");
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const showPasswordLogin = () => {
+    setLoginMode("password");
+    setCodeSent(false);
+    setToken("");
+  };
+
+  const showCodeLogin = () => {
+    setLoginMode("code");
+    setPassword("");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -129,7 +165,27 @@ const Login = () => {
               textContentType="emailAddress"
             />
 
-            {codeSent ? (
+            {loginMode === "password" ? (
+              <>
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Password"
+                  style={styles.input}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  secureTextEntry
+                  textContentType="password"
+                />
+                <Button
+                  text={isSigningIn ? "Signing in..." : "Sign In"}
+                  onPress={signInWithPassword}
+                  disabled={!canSignInWithPassword}
+                />
+                <Button text="Use email code instead" onPress={showCodeLogin} />
+              </>
+            ) : codeSent ? (
               <>
                 <Text style={styles.label}>One time code</Text>
                 <TextInput
@@ -147,23 +203,33 @@ const Login = () => {
                     isVerifyingCode || normalizedToken.length < OTP_LENGTH
                   }
                 />
+                <Button
+                  text="Use password instead"
+                  onPress={showPasswordLogin}
+                />
               </>
             ) : (
-              <Button
-                text={
-                  isSendingCode
-                    ? "Sending..."
-                    : cooldown > 0
-                      ? `Resend in ${cooldown}s`
-                      : "Send Code"
-                }
-                onPress={sendOtp}
-                disabled={
-                  isSendingCode ||
-                  cooldown > 0 ||
-                  !normalizedEmail.length
-                }
-              />
+              <>
+                <Button
+                  text={
+                    isSendingCode
+                      ? "Sending..."
+                      : cooldown > 0
+                        ? `Resend in ${cooldown}s`
+                        : "Send Code"
+                  }
+                  onPress={sendOtp}
+                  disabled={
+                    isSendingCode ||
+                    cooldown > 0 ||
+                    !normalizedEmail.length
+                  }
+                />
+                <Button
+                  text="Use password instead"
+                  onPress={showPasswordLogin}
+                />
+              </>
             )}
           </View>
         </ScrollView>

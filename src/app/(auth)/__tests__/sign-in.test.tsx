@@ -7,6 +7,7 @@ jest.mock("@/utils/supabase", () => ({
   supabase: {
     auth: {
       signInWithOtp: jest.fn(),
+      signInWithPassword: jest.fn(),
       verifyOtp: jest.fn(),
     },
     from: jest.fn(),
@@ -38,6 +39,33 @@ describe("Login", () => {
       },
       error: null,
     });
+    mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          email: "ada@example.com",
+          app_metadata: {},
+          user_metadata: {},
+          aud: "authenticated",
+          created_at: "2026-01-01T00:00:00.000Z",
+        },
+        session: {
+          access_token: "access-token",
+          refresh_token: "refresh-token",
+          expires_in: 3600,
+          token_type: "bearer",
+          user: {
+            id: "user-1",
+            email: "ada@example.com",
+            app_metadata: {},
+            user_metadata: {},
+            aud: "authenticated",
+            created_at: "2026-01-01T00:00:00.000Z",
+          },
+        },
+      },
+      error: null,
+    } as never);
     mockSupabase.auth.verifyOtp.mockResolvedValue({
       data: {
         user: {
@@ -92,6 +120,46 @@ describe("Login", () => {
     });
 
     expect(getByText("One time code")).toBeTruthy();
+  });
+
+  it("signs in with email and password for test users", async () => {
+    const { getByText, getByPlaceholderText } = render(<Login />);
+
+    fireEvent.changeText(
+      getByPlaceholderText("jon@gmail.com"),
+      "  REVIEWER@EXAMPLE.COM  ",
+    );
+    fireEvent.press(getByText("Use password instead"));
+    fireEvent.changeText(getByPlaceholderText("Password"), "test-password");
+    fireEvent.press(getByText("Sign In"));
+
+    await waitFor(() => {
+      expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+        email: "reviewer@example.com",
+        password: "test-password",
+      });
+    });
+  });
+
+  it("alerts when password sign-in fails", async () => {
+    mockSupabase.auth.signInWithPassword.mockResolvedValue({
+      data: {
+        user: null,
+        session: null,
+      },
+      error: mockAuthError("Invalid login credentials"),
+    } as never);
+
+    const { getByText, getByPlaceholderText } = render(<Login />);
+
+    fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
+    fireEvent.press(getByText("Use password instead"));
+    fireEvent.changeText(getByPlaceholderText("Password"), "wrong-password");
+    fireEvent.press(getByText("Sign In"));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Failed to sign in");
+    });
   });
 
   it("stays on the email form when sending the code fails", async () => {
