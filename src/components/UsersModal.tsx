@@ -15,6 +15,7 @@ import {
   AVAILABILITY_FIELDS,
   type AssignmentWithRelations,
   type AvailabilityField,
+  type VolunteerWithAssignments,
 } from "@/types";
 
 interface UsersModalProps {
@@ -56,8 +57,32 @@ const UsersModal = ({
       (volunteer) => typeof volunteer[availabilityField] === "boolean",
     );
   const volunteers = useMemo(() => {
+    const roster = [...(data ?? [])];
+
+    if (
+      canManageRoster &&
+      user?.id &&
+      !!user.full_name?.trim() &&
+      user.can_serve !== false &&
+      !roster.some((volunteer) => volunteer.id === user.id)
+    ) {
+      roster.push({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        role: user.role,
+        can_serve: user.can_serve,
+        available_8am: user.available_8am,
+        available_930am: user.available_930am,
+        available_11am: user.available_11am,
+        assignments: [],
+        position_preferences: [],
+      } as VolunteerWithAssignments);
+    }
+
     const assignableVolunteers = canManageRoster
-      ? [...(data ?? [])]
+      ? roster
       : (data ?? []).filter((volunteer) => volunteer.id === user?.id);
     const preferenceRank = (volunteer: NonNullable<typeof data>[number]) =>
       volunteer.position_preferences?.find(
@@ -85,7 +110,15 @@ const UsersModal = ({
     data,
     hasAvailabilityData,
     selectedStation,
+    user?.available_11am,
+    user?.available_8am,
+    user?.available_930am,
+    user?.avatar_url,
+    user?.can_serve,
+    user?.email,
+    user?.full_name,
     user?.id,
+    user?.role,
   ]);
   const availableCount = hasAvailabilityData && availabilityField
     ? volunteers.filter((volunteer) => volunteer[availabilityField] === true)
@@ -300,11 +333,20 @@ const UsersModal = ({
                                 }[availabilityField],
                               )
                             : true;
+                        const isAssignedToSelectedStation =
+                          currentAssignment?.station === selectedStation;
+                        const canAssignVolunteer =
+                          !isAssignedToSelectedStation &&
+                          isAvailableForService;
 
                         return (
                           <TouchableOpacity
                             key={id}
-                            style={styles.option}
+                            style={[
+                              styles.option,
+                              !canAssignVolunteer && styles.disabledOption,
+                            ]}
+                            disabled={!canAssignVolunteer}
                             onPress={() => assignSelectedStation(id)}
                           >
                             <View style={styles.userIcon}>
@@ -332,7 +374,9 @@ const UsersModal = ({
                                         : styles.unavailableHint,
                                 ]}
                               >
-                                {currentAssignment
+                                {isAssignedToSelectedStation
+                                  ? "Already assigned here"
+                                  : currentAssignment
                                   ? `Currently: Station ${currentAssignment.station}`
                                   : preferenceRank
                                     ? `Preference #${preferenceRank} for ${selectedStation}`
@@ -503,6 +547,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+
+  disabledOption: {
+    opacity: 0.45,
   },
 
   userIcon: {

@@ -129,7 +129,7 @@ describe("Login", () => {
       getByPlaceholderText("jon@gmail.com"),
       "  REVIEWER@EXAMPLE.COM  ",
     );
-    fireEvent.press(getByText("Use password instead"));
+    fireEvent.press(getByText("Password"));
     fireEvent.changeText(getByPlaceholderText("Password"), "test-password");
     fireEvent.press(getByText("Sign In"));
 
@@ -153,7 +153,7 @@ describe("Login", () => {
     const { getByText, getByPlaceholderText } = render(<Login />);
 
     fireEvent.changeText(getByPlaceholderText("jon@gmail.com"), "ada@example.com");
-    fireEvent.press(getByText("Use password instead"));
+    fireEvent.press(getByText("Password"));
     fireEvent.changeText(getByPlaceholderText("Password"), "wrong-password");
     fireEvent.press(getByText("Sign In"));
 

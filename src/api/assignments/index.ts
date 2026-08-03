@@ -30,6 +30,7 @@ export const useAssignmentList = (serviceId?: string) => {
             email,
             avatar_url,
             role,
+            can_serve,
             available_8am,
             available_930am,
             available_11am

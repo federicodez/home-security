@@ -129,6 +129,7 @@ export type Database = {
           available_8am: boolean | null
           available_930am: boolean | null
           avatar_url: string | null
+          can_serve: boolean
           created_at: string | null
           email: string | null
           full_name: string | null
@@ -140,6 +141,7 @@ export type Database = {
           available_8am?: boolean | null
           available_930am?: boolean | null
           avatar_url?: string | null
+          can_serve?: boolean
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           available_8am?: boolean | null
           available_930am?: boolean | null
           avatar_url?: string | null
+          can_serve?: boolean
           created_at?: string | null
           email?: string | null
           full_name?: string | null

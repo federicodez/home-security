@@ -152,7 +152,8 @@ describe("profiles api", () => {
       ],
       error: null,
     });
-    const profileSelect = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ order }));
+    const profileSelect = jest.fn(() => ({ eq }));
 
     mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
 
@@ -163,6 +164,7 @@ describe("profiles api", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockSupabase.from).toHaveBeenCalledWith("profiles");
+    expect(eq).toHaveBeenCalledWith("can_serve", true);
     expect(order).toHaveBeenCalledWith("full_name");
     expect(result.current.data).toEqual([
       { id: "profile-1", full_name: "Ada Lovelace", available_8am: false },
@@ -174,7 +176,8 @@ describe("profiles api", () => {
       data: [],
       error: null,
     });
-    const profileSelect = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ order }));
+    const profileSelect = jest.fn(() => ({ eq }));
 
     mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
     mockSupabase.rpc.mockResolvedValueOnce({
@@ -204,6 +207,7 @@ describe("profiles api", () => {
         email: null,
         avatar_url: null,
         role: "volunteer",
+        can_serve: true,
         available_8am: null,
         available_930am: null,
         available_11am: null,
@@ -218,7 +222,8 @@ describe("profiles api", () => {
       data: null,
       error: { message: "permission denied for table profiles" },
     });
-    const profileSelect = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ order }));
+    const profileSelect = jest.fn(() => ({ eq }));
 
     mockSupabase.from.mockReturnValueOnce({ select: profileSelect } as never);
     mockSupabase.rpc.mockResolvedValueOnce({
@@ -381,6 +386,33 @@ describe("profiles api", () => {
     });
   });
 
+  it("surfaces invite edge function response errors", async () => {
+    mockSupabase.functions.invoke.mockResolvedValue({
+      data: null,
+      error: {
+        message: "Edge Function returned a non-2xx status code",
+        context: {
+          clone: () => ({
+            json: async () => ({ error: "User already registered" }),
+          }),
+        },
+      },
+    } as never);
+
+    const { result } = renderHook(() => useInviteVolunteer(), {
+      wrapper: createQueryWrapper(),
+    });
+
+    result.current.mutate({
+      email: "grace@example.com",
+      full_name: "Grace Hopper",
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error?.message).toBe("User already registered");
+  });
+
   it("resets assignments and availability through the admin rpc", async () => {
     mockSupabase.rpc.mockResolvedValue({
       data: null,
@@ -411,6 +443,25 @@ describe("profiles api", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["volunteers"],
     });
+  });
+
+  it("surfaces reset rpc errors with the Supabase message", async () => {
+    mockSupabase.rpc.mockResolvedValue({
+      data: null,
+      error: { message: "Only admins can reset assignments and availability" },
+    });
+
+    const { result } = renderHook(() => useResetAssignmentsAndAvailability(), {
+      wrapper: createQueryWrapper(),
+    });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error).toEqual(
+      new Error("Only admins can reset assignments and availability"),
+    );
   });
 
   it("updates the current user's profile name and invalidates roster queries", async () => {

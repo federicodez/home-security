@@ -52,7 +52,7 @@ describe("UsersModal", () => {
     expect(getByText("1 available / 2 total")).toBeTruthy();
     expect(getByText("Clear Station A")).toBeTruthy();
     expect(getByText("ADA LOVELACE")).toBeTruthy();
-    expect(getByText("Currently: Station A")).toBeTruthy();
+    expect(getByText("Already assigned here")).toBeTruthy();
     expect(getByText("GRACE HOPPER")).toBeTruthy();
     expect(getByText("Preference #1 for A")).toBeTruthy();
   });
@@ -100,6 +100,90 @@ describe("UsersModal", () => {
 
     expect(onAssign).toHaveBeenCalledWith("profile-2", "A");
     expect(onModalVisible).toHaveBeenCalledWith(false);
+  });
+
+  it("does not assign volunteers who are unavailable for the service", () => {
+    const onAssign = jest.fn();
+
+    const { getByText } = render(
+      <UsersModal
+        serviceId="service-1"
+        modalVisible
+        onModalVisible={jest.fn()}
+        onAssign={onAssign}
+        onClear={jest.fn()}
+        assignments={[]}
+        selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
+      />,
+    );
+
+    fireEvent.press(getByText("ADA LOVELACE"));
+
+    expect(onAssign).not.toHaveBeenCalled();
+  });
+
+  it("does not reassign the volunteer already assigned to the selected station", () => {
+    const onAssign = jest.fn();
+
+    const { getByText } = render(
+      <UsersModal
+        serviceId="service-1"
+        modalVisible
+        onModalVisible={jest.fn()}
+        onAssign={onAssign}
+        onClear={jest.fn()}
+        assignments={[makeAssignment()]}
+        selectedStation="A"
+        serviceAvailabilityColumn="available_8am"
+      />,
+    );
+
+    expect(getByText("Already assigned here")).toBeTruthy();
+
+    fireEvent.press(getByText("ADA LOVELACE"));
+
+    expect(onAssign).not.toHaveBeenCalled();
+  });
+
+  it("includes the current admin when they can serve but are missing from the roster query", () => {
+    mockUseProfile.mockReturnValue({
+      data: {
+        id: "profile-admin",
+        full_name: "Federico Jimenez",
+        email: "rico@example.com",
+        avatar_url: null,
+        role: "admin",
+        can_serve: true,
+        available_8am: true,
+        available_930am: true,
+        available_11am: true,
+      },
+    } as ReturnType<typeof useProfile>);
+    mockUseVolunteers.mockReturnValueOnce({
+      data: [],
+    } as unknown as ReturnType<typeof useVolunteers>);
+    const onAssign = jest.fn();
+
+    const { getByText } = render(
+      <UsersModal
+        serviceId="service-1"
+        modalVisible
+        onModalVisible={jest.fn()}
+        onAssign={onAssign}
+        onClear={jest.fn()}
+        assignments={[]}
+        selectedStation="C"
+        serviceAvailabilityColumn="available_8am"
+      />,
+    );
+
+    expect(getByText("FEDERICO JIMENEZ")).toBeTruthy();
+    expect(getByText("Available for this service")).toBeTruthy();
+
+    fireEvent.press(getByText("FEDERICO JIMENEZ"));
+
+    expect(onAssign).toHaveBeenCalledWith("profile-admin", "C");
   });
 
   it("does not mark volunteers unavailable when availability is unknown", () => {

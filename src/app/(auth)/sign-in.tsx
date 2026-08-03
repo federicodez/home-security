@@ -204,7 +204,7 @@ const Login = () => {
                   }
                 />
                 <Button
-                  text="Use password instead"
+                  text="Password"
                   onPress={showPasswordLogin}
                 />
               </>
@@ -226,7 +226,7 @@ const Login = () => {
                   }
                 />
                 <Button
-                  text="Use password instead"
+                  text="Password"
                   onPress={showPasswordLogin}
                 />
               </>

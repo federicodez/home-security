@@ -129,6 +129,28 @@ describe("assignments api", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
   });
 
+  it("surfaces assignment rpc errors when a volunteer is unavailable", async () => {
+    mockSupabase.rpc.mockResolvedValue({
+      error: { message: "Volunteer is not available for this service" },
+    });
+
+    const { result } = renderHook(() => useUpdateAssignment(), {
+      wrapper: createQueryWrapper(),
+    });
+
+    result.current.mutate({
+      serviceId: "service-1",
+      station: "A",
+      profileId: "profile-1",
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error).toEqual({
+      message: "Volunteer is not available for this service",
+    });
+  });
+
   it("clears an assignment with a direct assignments update", async () => {
     const queryClient = createTestQueryClient();
     const updateResult = jest.fn().mockResolvedValue({

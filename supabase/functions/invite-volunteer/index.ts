@@ -98,35 +98,53 @@ Deno.serve(async (request) => {
     });
 
   if (inviteError || !inviteData.user) {
+    if (isExistingAuthUserError(inviteError?.message)) {
+      const { data: profile, error: profileError } = await admin.rpc(
+        "admin_upsert_profile_for_auth_email",
+        {
+          p_email: email,
+          p_full_name: fullName,
+          p_role: role,
+        },
+      );
+
+      if (profileError) {
+        return jsonResponse({ error: profileError.message }, 500);
+      }
+
+      return jsonResponse({ profile, invited: false }, 200);
+    }
+
     return jsonResponse(
       { error: inviteError?.message ?? "Failed to invite user" },
       400,
     );
   }
 
-  const { data: profile, error: profileError } = await admin
-    .from("profiles")
-    .upsert(
-      {
-        id: inviteData.user.id,
-        email,
-        full_name: fullName,
-        role,
-        available_8am: false,
-        available_930am: false,
-        available_11am: false,
-      },
-      { onConflict: "id" },
-    )
-    .select()
-    .single();
+  const { data: profile, error: profileError } = await admin.rpc(
+    "admin_upsert_profile_for_auth_email",
+    {
+      p_email: email,
+      p_full_name: fullName,
+      p_role: role,
+    },
+  );
 
   if (profileError) {
     return jsonResponse({ error: profileError.message }, 500);
   }
 
-  return jsonResponse({ profile }, 200);
+  return jsonResponse({ profile, invited: true }, 200);
 });
+
+function isExistingAuthUserError(message?: string) {
+  const normalizedMessage = message?.toLowerCase() ?? "";
+
+  return (
+    normalizedMessage.includes("already") ||
+    normalizedMessage.includes("registered")
+  );
+}
 
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {

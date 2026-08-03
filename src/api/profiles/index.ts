@@ -22,6 +22,29 @@ type InviteVolunteerInput = {
   role?: "admin" | "volunteer";
 };
 
+async function getFunctionErrorMessage(error: unknown) {
+  const context = (error as { context?: Response })?.context;
+
+  if (context) {
+    try {
+      const response = typeof context.clone === "function"
+        ? context.clone()
+        : context;
+      const body = (await response.json()) as { error?: unknown };
+
+      if (typeof body.error === "string") {
+        return body.error;
+      }
+    } catch {
+      // Fall back to the Supabase error message below.
+    }
+  }
+
+  if (error instanceof Error) return error.message;
+
+  return "Function request failed";
+}
+
 export type VolunteerService = {
   service_id: string;
   service_name: string;
@@ -85,6 +108,7 @@ function assignmentsRosterToVolunteers(
     email: null,
     avatar_url: null,
     role: "volunteer",
+    can_serve: true,
     available_8am: null,
     available_930am: null,
     available_11am: null,
@@ -107,6 +131,10 @@ export const useVolunteers = (serviceId: string) => {
           email,
           avatar_url,
           role,
+          can_serve,
+          available_8am,
+          available_930am,
+          available_11am,
 
           assignments (
             station,
@@ -125,6 +153,7 @@ export const useVolunteers = (serviceId: string) => {
           )
         `,
         )
+        .eq("can_serve", true)
         .order("full_name");
 
       if (error) {
@@ -257,7 +286,7 @@ export function useInviteVolunteer() {
         },
       );
 
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
 
       return data;
     },
@@ -278,7 +307,7 @@ export function useResetAssignmentsAndAvailability() {
         "admin_reset_assignments_and_availability",
       );
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
     },
 
     onSuccess: () => {
